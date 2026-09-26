@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<title>Planner</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<style>
+:root {
+  --bg: #0f1720; --card: #17212c; --line: #263341; --text: #e6edf3; --dim: #8b9bab;
+  --accent: #3fa7ff; --good: #3fbf6f; --bad: #ff6b6b; --warn: #f2b84b; --buy: #3fbf6f; --sell: #ff8a65;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  padding: 10px 16px 8px; }
+header h1 { font-size: 17px; margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+header .sub { color: var(--dim); font-size: 13px; margin-top: 2px; }
+main { padding: 12px 16px; max-width: 640px; margin: 0 auto; }
+nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card);
+  border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
+nav button { flex: 1; background: none; border: 0; color: var(--dim); padding: 10px 0 12px; font-size: 13px; }
+nav button b { display: block; font-size: 20px; line-height: 1.2; }
+nav button.on { color: var(--accent); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.card h2 { font-size: 15px; margin: 0 0 8px; }
+.big { font-size: 34px; font-weight: 700; line-height: 1.1; }
+.dim { color: var(--dim); } .small { font-size: 13px; }
+.good { color: var(--good); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+.row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; border: 1px solid var(--line); color: var(--dim); }
+.pill.now { border-color: var(--accent); color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+td { padding: 4px 2px; border-top: 1px solid var(--line); vertical-align: top; }
+td.pos { width: 34px; color: var(--dim); } td.num { text-align: right; white-space: nowrap; }
+.buy { color: var(--buy); } .sell { color: var(--sell); }
+.msg { font-size: 14px; margin: 6px 0; padding: 8px 10px; border-radius: 8px; background: #1d2a37; }
+.msg.warn { border-left: 3px solid var(--warn); } .msg.info { border-left: 3px solid var(--accent); }
+.msg.bad { border-left: 3px solid var(--bad); }
+button.act { width: 100%; text-align: left; background: var(--card); color: var(--text); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px; margin-bottom: 10px; font-size: 16px; }
+button.act b { display: block; } button.act span { color: var(--dim); font-size: 13px; }
+button.act.primary { border-color: var(--accent); }
+button.act:disabled, button.btn:disabled { opacity: .45; }
+button.btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font-size: 16px; font-weight: 600; }
+button.btn.ghost { background: none; border: 1px solid var(--line); color: var(--text); }
+button.link { background: none; border: 0; color: var(--accent); padding: 0; font-size: 14px; }
+pre { white-space: pre-wrap; word-break: break-word; font: 12.5px/1.35 ui-monospace, Consolas, monospace;
+  background: #0b1219; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0 0; max-height: 60vh; overflow: auto; }
+label { display: block; font-size: 14px; margin: 10px 0 4px; }
+input, select, textarea { width: 100%; background: #0b1219; color: var(--text); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px; font-size: 16px; font-family: inherit; }
+textarea { min-height: 70px; }
+.switch { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); gap: 12px; }
+.switch:first-of-type { border-top: 0; }
+.switch input { width: 24px; height: 24px; flex: none; }
+.help { color: var(--dim); font-size: 12.5px; }
+.seg-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+.seg-toggle button { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--dim); font-size: 14px; }
+.seg-toggle button.on { border-color: var(--accent); color: var(--accent); }
+#busy { display: none; } #busy.show { display: block; }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--accent); border-right-color: transparent;
+  border-radius: 50%; animation: s 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes s { to { transform: rotate(360deg); } }
+.swaprow { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Planner</span><span id="net" class="pill"></span></h1>
+  <div class="sub" id="sub">Loading…</div>
+</header>
+<main>
+  <div id="busy" class="card"><span class="spin"></span><b id="busyTitle">Running…</b>
+    <div class="small dim" id="busyText"></div></div>
+  <div id="err"></div>
+  <section id="v-plan"></section>
+  <section id="v-actions" class="hidden"></section>
+  <section id="v-swap" class="hidden"></section>
+  <section id="v-settings" class="hidden"></section>
+  <section id="v-setup" class="hidden"></section>
+</main>
+<nav>
+  <button data-v="plan" class="on"><b>▦</b>Plan</button>
+  <button data-v="actions"><b>▶</b>Actions</button>
+  <button data-v="swap"><b>⇄</b>Swap</button>
+  <button data-v="settings"><b>⚙</b>Settings</button>
+  <button data-v="setup"><b>🔑</b>Setup</button>
+</nav>
+<script>
+"use strict";
+/* ------------------------------------------------------------------ storage */
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+let cfg = LS.get("cfg", { owner: "", repo: "", token: "" });
+let app = LS.get("app", null);          // last data/app.json (offline copy, MOB4)
+let appFetchedAt = LS.get("appFetchedAt", null);
+let planMode = "result";                // result | preview
+let running = null;                     // {action, requestId, startedAt, runUrl}
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const d = iso => iso ? `${+iso.slice(8, 10)}.${+iso.slice(5, 7)}.` : "";
+const eur = n => n == null ? "–" : Math.round(n).toLocaleString("fi-FI").replace(/ /g, " ") + " €";
+const todayIso = () => { const t = new Date(); return new Date(t - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const ago = iso => { if (!iso) return "never"; const m = Math.round((Date.now() - new Date(iso)) / 6e4);
+  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+
+/* ------------------------------------------------- messages (MOB6, like PC) */
+function fmtValue(v, spec) {
+  if (!spec) return String(v);
+  if (typeof v !== "number") return String(v);
+  let s = spec.includes(",") ? Math.abs(v).toLocaleString("en-US") : String(Math.abs(v));
+  if (v < 0) s = "-" + s; else if (spec.includes("+")) s = "+" + s;
+  return s;
+}
+function render(item) {
+  const msgs = (app && app.messages) || {};
+  const t = msgs[item.code];
+  if (!t) return `${item.code} ${JSON.stringify(Object.fromEntries(Object.entries(item).filter(([k]) => k !== "code")))}`;
+  return t.replace(/\{(\w+)(?::([^}]*))?\}/g, (m, k, spec) => k in item ? fmtValue(item[k], spec) : m);
+}
+
+/* ------------------------------------------------------------- GitHub API */
+const API = "https://api.github.com";
+function headers(extra = {}) {
+  return { "Authorization": "Bearer " + cfg.token, "X-GitHub-Api-Version": "2022-11-28", ...extra };
+}
+async function gh(path, opts = {}) {
+  const r = await fetch(API + path, { cache: "no-store", ...opts, headers: headers(opts.headers || {}) });
+  if (!r.ok) {
+    let detail = ""; try { detail = (await r.json()).message || ""; } catch {}
+    const hint = r.status === 401 ? " (token wrong or expired → Setup)" : r.status === 403 ? " (token lacks a permission → Setup)"
+      : r.status === 404 ? " (owner/repo name wrong, or token has no access to this repo → Setup)" : "";
+    throw new Error(`GitHub ${r.status}: ${detail}${hint}`);
+  }
+  return r;
+}
+const repoPath = () => `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
+
+async function loadApp() {
+  const r = await gh(`${repoPath()}/contents/data/app.json?ref=main&t=${Date.now()}`,
+    { headers: { Accept: "application/vnd.github.raw+json" } });
+  app = await r.json();
+  appFetchedAt = new Date().toISOString();
+  LS.set("app", app); LS.set("appFetchedAt", appFetchedAt);
+}
+
+async function dispatch(action, extra = {}) {
+  const requestId = "r" + Date.now().toString(36);
+  await gh(`${repoPath()}/actions/workflows/app.yml/dispatches`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ref: "main", inputs: { action, request_id: requestId, ...extra } }),
+  });
+  return requestId;
+}
+
+async function findRun(requestId) {
+  const r = await gh(`${repoPath()}/actions/workflows/app.yml/runs?event=workflow_dispatch&per_page=15`);
+  const j = await r.json();
+  return (j.workflow_runs || []).find(w => (w.display_title || w.name || "").includes(requestId));
+}
+
+/* ------------------------------------------------------------ run an action */
+const ACTION_TEXT = {
+  "run": "Daily run", "preview-next": "Preview next period", "save-next": "Save next period",
+  "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Log swaps",
+  "settings": "Save settings", "check-sources": "Check sources", "state": "Refresh",
+};
+async function runAction(action, extra = {}, afterView = "plan") {
+  if (running) return alert("Wait: another action is still running.");
+  if (!ready()) return show("setup");
+  running = { action, startedAt: Date.now() };
+  busy(true);
+  let t0 = Date.now(), tick = setInterval(() => busyText(), 1000);
+  try {
+    running.requestId = await dispatch(action, extra);
+    busyText("Started. Waiting for GitHub…");
+    let run = null, n = 0;
+    while (true) {
+      await sleep(n < 3 ? 4000 : 6000); n++;
+      if (Date.now() - t0 > 12 * 60 * 1000) throw new Error("Timed out after 12 min. Check the Actions tab on GitHub.");
+      try { run = await findRun(running.requestId); } catch (e) { if (!navigator.onLine) continue; throw e; }
+      if (!run) continue;
+      running.runUrl = run.html_url;
+      if (run.status === "completed") break;
+    }
+    busyText("Done. Loading results…");
+    await sleep(1500);
+    await loadApp();
+    const la = app.last_action || {};
+    if (run.conclusion !== "success" && la.ok !== false) {
+      flash(`GitHub run ended: ${run.conclusion}. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Open log</a>`, "bad");
+    }
+    if (action.startsWith("preview-")) planMode = "preview";
+    if (action.startsWith("save-") || action === "run") planMode = "result";
+    show(la.ok === false ? "actions" : afterView);
+  } catch (e) {
+    flash(esc(e.message) + (running && running.runUrl ? ` <a href="${esc(running.runUrl)}" target="_blank" rel="noopener">Open log</a>` : ""), "bad");
+  } finally {
+    clearInterval(tick); running = null; busy(false); renderAll();
+  }
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function busy(on) { $("#busy").classList.toggle("show", on); if (on) { $("#busyTitle").textContent = ACTION_TEXT[running.action] + "…"; busyText("Sending…"); }
+  document.querySelectorAll("button.act, button.btn").forEach(b => b.disabled = on); }
+function busyText(t) { if (t) running && (running.note = t); if (!running) return;
+  const s = Math.round((Date.now() - running.startedAt) / 1000);
+  $("#busyText").textContent = `${running.note || ""} ${s} s (usually 40–90 s)`; }
+function flash(html, kind = "info") { $("#err").innerHTML = `<div class="msg ${kind}">${html} <button class="link" onclick="this.parentElement.remove()">✕</button></div>`; }
+
+/* --------------------------------------------------------------- views */
+function show(v) {
+  document.querySelectorAll("main > section").forEach(s => s.classList.toggle("hidden", s.id !== "v-" + v));
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  LS.set("view", v); window.scrollTo(0, 0);
+}
+function ready() { return cfg.owner && cfg.repo && cfg.token; }
+
+function renderHeader() {
+  const st = app && app.state;
+  $("#net").textContent = navigator.onLine ? "online" : "offline";
+  $("#net").className = "pill" + (navigator.onLine ? "" : " warn");
+  if (!st) { $("#sub").textContent = ready() ? "No data yet. Pull down or open Actions → Refresh." : "Start in Setup 🔑"; return; }
+  const sw = st.swaps_used == null ? "–" : `${st.swaps_used}/${st.swaps_total}`;
+  $("#sub").textContent = `Period ${st.period ?? "–"} · swaps ${sw} · cash ${eur(st.leftover_cash)} · updated ${ago(app.updated_at)}`;
+}
+
+function planPositions(res) {
+  const pos = {};
+  (app.state.roster || []).forEach(p => pos[p.name] = p.position);
+  (res.segments || []).forEach(s => s.players.forEach(p => pos[p.name] = p.position));
+  return pos;
+}
+
+function renderPlan() {
+  const el = $("#v-plan");
+  if (!app) { el.innerHTML = `<div class="card">No data yet.${ready() ? ` <button class="link" onclick="refresh()">Load now</button>` : ` Go to <b>Setup 🔑</b> first.`}</div>`; return; }
+  const hasPrev = !!app.preview, hasRes = !!app.result;
+  if (planMode === "preview" && !hasPrev) planMode = "result";
+  const res = planMode === "preview" ? app.preview : app.result;
+  let h = `<div class="seg-toggle">
+    <button class="${planMode === "result" ? "on" : ""}" onclick="planMode='result';renderPlan()">My plan</button>
+    <button class="${planMode === "preview" ? "on" : ""}" ${hasPrev ? "" : "disabled"} onclick="planMode='preview';renderPlan()">Period preview</button></div>`;
+  if (!res) { el.innerHTML = h + `<div class="card">No ${planMode === "preview" ? "preview" : "plan"} saved yet. Use <b>Actions</b>.</div>`; return; }
+  const today = todayIso();
+  h += `<div class="card"><div class="row"><div><div class="big">${Math.round(res.total_points)}</div>
+    <div class="dim small">points · ${res.mode === "free_start" ? "free start, whole period" : "rest of period"} · period ${res.period}</div></div>
+    <div class="num small dim" style="text-align:right">swaps planned<br><b style="color:var(--text);font-size:18px">${res.swaps_planned ?? 0}/${res.swaps_left ?? 0}</b></div></div>
+    <div class="dim small" style="margin-top:6px">Calculated ${d(res.computed_at)} · budget ${eur(res.budget)} · cash ${eur(res.leftover_cash)}</div>`;
+  if (planMode === "preview") h += `<div class="msg info">Preview only. After you buy the 6 players of #1 on the site, go to <b>Actions → Save</b>.</div>`;
+  if (res.gate) h += `<div class="msg info">${esc(render(res.gate))}</div>`;
+  (res.events || []).forEach(e => h += `<div class="msg info">${esc(render(e))}</div>`);
+  h += `</div>`;
+  (res.segments || []).forEach((s, i) => {
+    const first = s.dates[0], last = s.dates[s.dates.length - 1];
+    const now = first <= today && today <= last;
+    const head = (i === 0 && res.mode === "continuation") ? "NOW" : `#${i + 1}`;
+    h += `<div class="card"><div class="row"><h2>${head} · ${d(first)}–${d(last)} <span class="dim small">(${s.dates.length} game days)</span></h2>
+      <b>${Math.round(s.points)} p</b></div>`;
+    if (now) h += `<span class="pill now">today is in this window</span>`;
+    if (s.in && s.in.length) {
+      h += `<div class="small" style="margin:8px 0"><div class="buy">BUY: ${s.in.map(esc).join(", ")}</div>
+        <div class="sell">SELL: ${s.out.map(esc).join(", ")}</div>
+        <div class="dim">Do these swaps before the first game on ${d(first)}</div></div>`;
+    }
+    h += `<table>` + s.players.map(p => `<tr><td class="pos">${esc(p.position)}</td>
+      <td>${s.in && s.in.includes(p.name) ? "<span class='buy'>●</span> " : ""}${esc(p.name)}<div class="dim small">${esc(p.team)} · ${p.games_in_window ?? "?"} games</div></td>
+      <td class="num">${(+p.ppg).toFixed(1)}<div class="dim small">p/game</div></td></tr>`).join("") + `</table>`;
+    const caps = {};
+    (s.captain_by_day || []).forEach(c => (caps[c.name] = caps[c.name] || []).push(c));
+    const capToday = (s.captain_by_day || []).find(c => c.date === today);
+    if (Object.keys(caps).length) {
+      h += `<div class="small" style="margin-top:8px"><b>Captain:</b> ` + Object.entries(caps).map(([n, cs]) =>
+        `${esc(n.split(" ")[0])} ${cs.map(c => c.date === today ? `<b class="warn">${d(c.date)}</b>` : d(c.date)).join(" ")}`).join("; ") + `</div>`;
+      if (capToday) h += `<div class="msg info">Captain today: <b>${esc(capToday.name)}</b></div>`;
+    }
+    h += `</div>`;
+  });
+  (res.warnings || []).forEach(w => h += `<div class="msg warn">${esc(render(w))}</div>`);
+  el.innerHTML = h;
+}
+
+function renderActions() {
+  const la = app && app.last_action;
+  let h = `<button class="act primary" onclick="runAction('run')"><b>▶ Daily run</b><span>Before the first game of the day: fresh data, new plan, what to do today.</span></button>
+  <div class="card"><h2>Period start</h2>
+    <button class="act" onclick="runAction('preview-next')"><b>Preview next period</b><span>Best 6 for the next period. Changes nothing.</span></button>
+    <button class="act" onclick="savePeriod('save-next')"><b>Save next period</b><span>After you bought the 6 players of #1. Resets roster, swaps, plan.</span></button>
+    <details class="small"><summary class="dim">Current period instead</summary><div style="margin-top:8px">
+      <button class="act" onclick="runAction('preview-now')"><b>Preview this period</b><span>Changes nothing.</span></button>
+      <button class="act" onclick="savePeriod('save-now')"><b>Save this period</b><span>Resets roster, swaps, plan.</span></button></div></details>
+  </div>
+  <button class="act" onclick="runAction('check-sources',{},'actions')"><b>Check sources</b><span>Download all data sites and report OK / FAIL.</span></button>
+  <button class="act" onclick="refresh()"><b>↻ Reload</b><span>Just fetch the latest saved results (no calculation).</span></button>`;
+  if (la) {
+    h += `<div class="card"><div class="row"><h2>Last action: ${esc(la.command)} ${esc((la.args || []).join(" "))}</h2>
+      <b class="${la.ok ? "good" : "bad"}">${la.ok ? "OK" : "FAILED"}</b></div>
+      <div class="dim small">${esc(ago(la.finished_at))} · ${esc((la.finished_at || "").replace("T", " ").slice(0, 16))}</div>
+      <pre>${esc(la.output || "(no output)")}</pre></div>`;
+  }
+  $("#v-actions").innerHTML = h;
+}
+function savePeriod(action) {
+  const p = app && app.preview;
+  const names = p && p.segments && p.segments[0] ? p.segments[0].players.map(x => x.name).join(", ") : "(no preview yet)";
+  if (!confirm(`Save the period start?\n\nOnly do this AFTER you bought exactly the 6 players of #1 on the site.\n\nLast preview #1: ${names}\n\n(The save re-calculates with fresh data; if #1 changed, fix it afterwards with Swap.)`)) return;
+  runAction(action);
+}
+
+/* ------------------------------------------------------------------ swap */
+function renderSwap() {
+  const el = $("#v-swap");
+  if (!app) { el.innerHTML = `<div class="card">No data yet.</div>`; return; }
+  const roster = app.state.roster || [];
+  let h = `<div class="card"><h2>I made swaps on the site</h2>
+    <div class="help">Tick each player you SOLD and type who you BOUGHT for him (part of the name is enough, e.g. "Palmu"). Same position only.</div>
+    <button class="link" style="margin-top:8px" onclick="fillFromPlan()">Fill from plan</button><div id="swaprows">`;
+  roster.forEach((p, i) => {
+    h += `<div class="swaprow"><label style="margin:0;display:flex;gap:10px;align-items:center">
+      <input type="checkbox" id="so${i}" style="width:22px;height:22px" onchange="$('#si${i}').classList.toggle('hidden',!this.checked)">
+      <span><b>${esc(p.name)}</b> <span class="dim small">${esc(p.position)} · ${esc(p.team)}</span></span></label>
+      <input id="si${i}" class="hidden" placeholder="bought (${esc(p.position)})" autocomplete="off" autocapitalize="words"></div>`;
+  });
+  h += `</div><button class="btn" style="width:100%;margin-top:10px" onclick="sendSwaps()">Save swaps</button></div>
+    <div class="card small dim">Swaps left in this period: <b style="color:var(--text)">${app.state.swaps_used == null ? "?" : app.state.swaps_total - app.state.swaps_used}</b> (reserve ${app.state.swaps_buffer}). The swap counter and cash update automatically.</div>`;
+  el.innerHTML = h;
+}
+function fillFromPlan() {
+  const res = app.result;
+  if (!res || !res.segments) return alert("No saved plan.");
+  const today = todayIso();
+  const seg = res.segments.find(s => s.in && s.in.length && s.dates[0] >= today) || res.segments.find(s => s.in && s.in.length);
+  if (!seg) return alert("The plan has no swaps.");
+  const pos = planPositions(res), roster = app.state.roster || [];
+  const ins = [...seg.in];
+  roster.forEach((p, i) => {
+    const on = seg.out.includes(p.name);
+    $("#so" + i).checked = on; $("#si" + i).classList.toggle("hidden", !on); $("#si" + i).value = "";
+    if (on) { const k = ins.findIndex(n => pos[n] === p.position); if (k >= 0) { $("#si" + i).value = ins[k]; ins.splice(k, 1); } }
+  });
+  flash(`Filled from the plan window starting ${d(seg.dates[0])}. Check it matches what you really did.`);
+}
+function sendSwaps() {
+  const roster = app.state.roster || [], pairs = [];
+  for (let i = 0; i < roster.length; i++) {
+    if (!$("#so" + i).checked) continue;
+    const inn = $("#si" + i).value.trim();
+    if (!inn) return alert(`Who did you buy for ${roster[i].name}?`);
+    if (/[>;]/.test(inn)) return alert("Names cannot contain > or ;");
+    pairs.push(`${roster[i].name}>${inn}`);
+  }
+  if (!pairs.length) return alert("Tick at least one sold player.");
+  if (!confirm("Save these swaps?\n\n" + pairs.map(p => p.replace(">", "  →  ")).join("\n"))) return;
+  runAction("swap", { pairs: pairs.join("; ") }, "actions");
+}
+
+/* -------------------------------------------------------------- settings */
+const SECTION_TITLES = { features: "Switches", swaps: "Swaps", lists: "Player lists", search: "Search",
+  season: "Season", roster_rules: "Roster rules", params: "Advanced numbers", ui: "Language" };
+function renderSettings() {
+  const el = $("#v-settings");
+  if (!app || !app.settings_schema) { el.innerHTML = `<div class="card">No data yet.</div>`; return; }
+  const S = app.settings, sch = app.settings_schema;
+  let h = "";
+  (app.settings_warnings || []).forEach(w => h += `<div class="msg warn">${esc(render(w))}</div>`);
+  for (const sec of ["features", "swaps", "lists", "search", "season", "roster_rules", "params", "ui"]) {
+    if (!sch[sec]) continue;
+    h += `<div class="card"><h2>${SECTION_TITLES[sec] || sec}</h2>`;
+    if (sec === "params") h += `<details><summary class="dim small">Show (change only if you know why)</summary>`;
+    for (const [k, f] of Object.entries(sch[sec])) {
+      const id = `set-${sec}-${k}`, v = S[sec][k];
+      const title = sec === "features" ? `${k} · ${esc(app.features[k] || "")}` : esc(k);
+      const help = sec === "features" ? "" : `<div class="help">${esc(f.description)}${f.min != null || f.max != null ? ` (${f.min ?? "…"}–${f.max ?? "…"})` : ""}${f.feature ? ` · used by ${f.feature}` : ""}</div>`;
+      if (f.type === "bool") {
+        h += `<div class="switch"><div>${title}</div><input type="checkbox" id="${id}" ${v ? "checked" : ""}></div>`;
+      } else if (f.choices) {
+        h += `<label for="${id}">${title}</label><select id="${id}">${f.choices.map(c => `<option ${c === v ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>${help}`;
+      } else if (f.type === "list") {
+        h += `<label for="${id}">${title}</label><textarea id="${id}" placeholder="one name per line">${esc(v.join("\n"))}</textarea>${help}`;
+      } else if (f.type === "dict") {
+        h += `<label for="${id}">${title}</label><input id="${id}" value='${esc(JSON.stringify(v))}'>${help}`;
+      } else {
+        h += `<label for="${id}">${title}</label><input id="${id}" inputmode="decimal" value="${esc(v)}">${help}`;
+      }
+    }
+    if (sec === "params") h += `</details>`;
+    h += `</div>`;
+  }
+  h += `<button class="btn" style="width:100%" onclick="saveSettings()">Save settings</button>
+    <p class="help">Saving checks every value on GitHub. If one is wrong, nothing changes and the reason is shown under Actions.</p>`;
+  el.innerHTML = h;
+}
+function collectSettings() {
+  const S = JSON.parse(JSON.stringify(app.settings)), sch = app.settings_schema;
+  for (const [sec, fields] of Object.entries(sch)) for (const [k, f] of Object.entries(fields)) {
+    const el = document.getElementById(`set-${sec}-${k}`); if (!el) continue;
+    if (f.type === "bool") S[sec][k] = el.checked;
+    else if (f.type === "list") S[sec][k] = el.value.split("\n").map(s => s.trim()).filter(Boolean);
+    else if (f.type === "dict") { try { S[sec][k] = JSON.parse(el.value); } catch { throw new Error(`${sec}.${k} is not valid, e.g. {"MV":1,"PU":2,"HY":3}`); } }
+    else if (f.type === "int" || f.type === "float") {
+      const n = Number(String(el.value).replace(",", ".").replace(/\s/g, ""));
+      if (!isFinite(n) || el.value.trim() === "") throw new Error(`${sec}.${k} must be a number`);
+      S[sec][k] = n;
+    } else S[sec][k] = el.value;
+  }
+  return S;
+}
+function saveSettings() {
+  let S; try { S = collectSettings(); } catch (e) { return alert(e.message); }
+  const changes = [];
+  for (const sec in S) for (const k in S[sec]) if (JSON.stringify(S[sec][k]) !== JSON.stringify(app.settings[sec][k]))
+    changes.push(`${sec}.${k}: ${JSON.stringify(app.settings[sec][k])} → ${JSON.stringify(S[sec][k])}`);
+  if (!changes.length) return alert("Nothing changed.");
+  if (!confirm("Save these changes?\n\n" + changes.join("\n"))) return;
+  runAction("settings", { settings_json: JSON.stringify(S) }, "actions");
+}
+
+/* ----------------------------------------------------------------- setup */
+function renderSetup() {
+  $("#v-setup").innerHTML = `<div class="card"><h2>Connect to your private repo</h2>
+    <label for="c-owner">GitHub user name</label><input id="c-owner" value="${esc(cfg.owner)}" autocapitalize="off" autocomplete="off" placeholder="your GitHub user name">
+    <label for="c-repo">Repo name</label><input id="c-repo" value="${esc(cfg.repo)}" autocapitalize="off" autocomplete="off" placeholder="the PRIVATE repo name">
+    <label for="c-token">Token</label><input id="c-token" type="password" value="${esc(cfg.token)}" autocapitalize="off" autocomplete="off" placeholder="github_pat_…">
+    <div class="help">Fine-grained token with access to ONLY this repo: Contents = Read, Actions = Read and write. Stored only on this phone.</div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="saveCfg()">Save & test</button>
+    <button class="btn ghost" onclick="forget()">Forget token</button></div></div>
+    <div class="card small dim">Offline copy from ${esc(appFetchedAt ? appFetchedAt.replace("T", " ").slice(0, 16) : "–")}. App version 1.</div>`;
+}
+async function saveCfg() {
+  cfg = { owner: $("#c-owner").value.trim(), repo: $("#c-repo").value.trim(), token: $("#c-token").value.trim() };
+  LS.set("cfg", cfg);
+  try { await loadApp(); flash("Connected ✓ Data loaded.", "info"); renderAll(); show("plan"); }
+  catch (e) { flash(esc(e.message), "bad"); }
+}
+function forget() { if (!confirm("Remove the token from this phone?")) return; cfg.token = ""; LS.set("cfg", cfg); renderSetup(); }
+
+async function refresh() {
+  if (!ready()) return show("setup");
+  try { await loadApp(); $("#err").innerHTML = ""; renderAll(); }
+  catch (e) { flash(esc(e.message) + (app ? " Showing the saved copy." : ""), "bad"); }
+}
+function renderAll() { renderHeader(); renderPlan(); renderActions(); renderSwap(); renderSettings(); renderSetup(); }
+
+/* ------------------------------------------------------------------ start */
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
+window.addEventListener("online", () => { renderHeader(); refresh(); });
+window.addEventListener("offline", renderHeader);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !running && ready() && navigator.onLine) refresh(); });
+renderAll();
+show(ready() ? LS.get("view", "plan") : "setup");
+if (ready() && navigator.onLine) refresh();
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "127.0.0.1")) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
