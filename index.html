@@ -243,7 +243,7 @@ function planPositions(res) {
 
 function renderPlan() {
   const el = $("#v-plan");
-  if (!app) { el.innerHTML = `<div class="card">No data yet.${ready() ? ` <button class="link" onclick="refresh()">Load now</button>` : ` Go to <b>Setup 🔑</b> first.`}</div>`; return; }
+  if (!app) { el.innerHTML = `<div class="card">No data yet.${ready() ? `<div style="margin-top:10px"><button class="btn" onclick="runAction('state')">Create / refresh data</button></div>` : ` Go to <b>Setup 🔑</b> first.`}</div>`; return; }
   const hasPrev = !!app.preview, hasRes = !!app.result;
   if (planMode === "preview" && !hasPrev) planMode = "result";
   const res = planMode === "preview" ? app.preview : app.result;
@@ -300,7 +300,8 @@ function renderActions() {
       <button class="act" onclick="savePeriod('save-now')"><b>Save this period</b><span>Resets roster, swaps, plan.</span></button></div></details>
   </div>
   <button class="act" onclick="runAction('check-sources',{},'actions')"><b>Check sources</b><span>Download all data sites and report OK / FAIL.</span></button>
-  <button class="act" onclick="refresh()"><b>↻ Reload</b><span>Just fetch the latest saved results (no calculation).</span></button>`;
+  <button class="act" onclick="refresh()"><b>↻ Reload</b><span>Just fetch the latest saved results (no calculation).</span></button>
+  <button class="act" onclick="runAction('state',{},'actions')"><b>Create / refresh data</b><span>Rebuilds the data file on GitHub from the saved state (no download, no calculation).</span></button>`;
   if (la) {
     h += `<div class="card"><div class="row"><h2>Last action: ${esc(la.command)} ${esc((la.args || []).join(" "))}</h2>
       <b class="${la.ok ? "good" : "bad"}">${la.ok ? "OK" : "FAILED"}</b></div>
@@ -438,15 +439,24 @@ function renderSetup() {
 async function saveCfg() {
   cfg = { owner: $("#c-owner").value.trim(), repo: $("#c-repo").value.trim(), token: $("#c-token").value.trim() };
   LS.set("cfg", cfg);
+  try { await gh(repoPath()); }                       // 1) can the token see the repo at all?
+  catch (e) { return flash(e.message.startsWith("GitHub 404")
+      ? "Repo not found. Check: user name and repo name spelled right, and the token was made with " +
+        "<b>Only select repositories → your private repo</b>. " + esc(e.message) : esc(e.message), "bad"); }
   try { await loadApp(); flash("Connected ✓ Data loaded.", "info"); renderAll(); show("plan"); }
-  catch (e) { flash(esc(e.message), "bad"); }
+  catch (e) {                                          // 2) repo OK, data file missing?
+    if (e.message.startsWith("GitHub 404")) {
+      flash("Connected ✓ The repo is OK, but it has no data file yet. Creating it now (about 1 min)…", "info");
+      renderAll(); show("plan"); runAction("state");
+    } else flash(esc(e.message), "bad");
+  }
 }
 function forget() { if (!confirm("Remove the token from this phone?")) return; cfg.token = ""; LS.set("cfg", cfg); renderSetup(); }
 
 async function refresh() {
   if (!ready()) return show("setup");
   try { await loadApp(); $("#err").innerHTML = ""; renderAll(); }
-  catch (e) { flash(esc(e.message) + (app ? " Showing the saved copy." : ""), "bad"); }
+  catch (e) { flash(esc(e.message) + (e.message.startsWith("GitHub 404") ? " If Setup says the repo is OK, tap Actions → <b>Create / refresh data</b>." : "") + (app ? " Showing the saved copy." : ""), "bad"); }
 }
 function renderAll() { renderHeader(); renderPlan(); renderActions(); renderSwap(); renderSettings(); renderSetup(); }
 
