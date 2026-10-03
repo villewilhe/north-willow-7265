@@ -194,6 +194,7 @@ async function runAction(action, extra = {}, afterView = "plan") {
       if (run.status === "completed") break;
     }
     busyText("Done. Loading results…");
+    $("#err").innerHTML = "";                       // old notes are no longer true
     await sleep(1500);
     await loadApp();
     const la = app.last_action || {};
@@ -273,7 +274,7 @@ function renderPlan() {
         <div class="dim">Do these swaps before the first game on ${d(first)}</div></div>`;
     }
     h += `<table>` + s.players.map(p => `<tr><td class="pos">${esc(p.position)}</td>
-      <td>${s.in && s.in.includes(p.name) ? "<span class='buy'>●</span> " : ""}${esc(p.name)}<div class="dim small">${esc(p.team)} · ${p.games_in_window ?? "?"} games</div></td>
+      <td>${s.in && s.in.includes(p.name) ? "<span class='buy'>●</span> " : ""}${esc(p.name)}<div class="dim small">${esc(p.team)} · ${p.games_in_window ?? "?"} game${p.games_in_window === 1 ? "" : "s"}</div></td>
       <td class="num">${(+p.ppg).toFixed(1)}<div class="dim small">p/game</div></td></tr>`).join("") + `</table>`;
     const caps = {};
     (s.captain_by_day || []).forEach(c => (caps[c.name] = caps[c.name] || []).push(c));
