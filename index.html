@@ -73,25 +73,21 @@ textarea { min-height: 70px; }
 </head>
 <body>
 <header>
-  <h1><span>Planner</span><span id="net" class="pill"></span></h1>
+  <h1><span>Planner</span><span><button class="link" id="reload" style="font-size:20px;margin-right:6px" onclick="refresh()" title="Reload saved results">↻</button> <span id="net" class="pill"></span></span></h1>
   <div class="sub" id="sub">Loading…</div>
 </header>
 <main>
   <div id="busy" class="card"><span class="spin"></span><b id="busyTitle">Running…</b>
     <div class="small dim" id="busyText"></div></div>
   <div id="err"></div>
-  <section id="v-plan"></section>
-  <section id="v-actions" class="hidden"></section>
+  <section id="v-home"></section>
   <section id="v-swap" class="hidden"></section>
-  <section id="v-settings" class="hidden"></section>
-  <section id="v-setup" class="hidden"></section>
+  <section id="v-settings" class="hidden"><div id="settingsLists"></div><div id="setupBox"></div></section>
 </main>
 <nav>
-  <button data-v="plan" class="on"><b>▦</b>Plan</button>
-  <button data-v="actions"><b>▶</b>Actions</button>
+  <button data-v="home" class="on"><b>▦</b>Roster</button>
   <button data-v="swap"><b>⇄</b>Swap</button>
   <button data-v="settings"><b>⚙</b>Settings</button>
-  <button data-v="setup"><b>🔑</b>Setup</button>
 </nav>
 <script>
 "use strict";
@@ -103,7 +99,7 @@ const LS = {
 let cfg = LS.get("cfg", { owner: "", repo: "", token: "" });
 let app = LS.get("app", null);          // last data/app.json (offline copy, MOB4)
 let appFetchedAt = LS.get("appFetchedAt", null);
-let planMode = "result";                // result | preview
+let showSaved = false;                  // true = user chose to look at the saved plan while an unsaved preview exists
 let running = null;                     // {action, requestId, startedAt, runUrl}
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -138,8 +134,8 @@ async function gh(path, opts = {}) {
   const r = await fetch(API + path, { cache: "no-store", ...opts, headers: headers(opts.headers || {}) });
   if (!r.ok) {
     let detail = ""; try { detail = (await r.json()).message || ""; } catch {}
-    const hint = r.status === 401 ? " (token wrong or expired → Setup)" : r.status === 403 ? " (token lacks a permission → Setup)"
-      : r.status === 404 ? " (owner/repo name wrong, or token has no access to this repo → Setup)" : "";
+    const hint = r.status === 401 ? " (token wrong or expired → Settings ⚙ → Connect)" : r.status === 403 ? " (token lacks a permission → Settings ⚙ → Connect)"
+      : r.status === 404 ? " (owner/repo name wrong, or token has no access to this repo → Settings ⚙ → Connect)" : "";
     throw new Error(`GitHub ${r.status}: ${detail}${hint}`);
   }
   return r;
@@ -175,7 +171,7 @@ const ACTION_TEXT = {
   "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Log swaps",
   "settings": "Save settings", "check-sources": "Check sources", "state": "Refresh",
 };
-async function runAction(action, extra = {}, afterView = "plan") {
+async function runAction(action, extra = {}, afterView = "home") {
   if (running) return alert("Wait: another action is still running.");
   if (!ready()) return show("setup");
   running = { action, startedAt: Date.now() };
@@ -201,9 +197,10 @@ async function runAction(action, extra = {}, afterView = "plan") {
     if (run.conclusion !== "success" && la.ok !== false) {
       flash(`GitHub run ended: ${run.conclusion}. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Open log</a>`, "bad");
     }
-    if (action.startsWith("preview-")) planMode = "preview";
-    if (action.startsWith("save-") || action === "run") planMode = "result";
-    show(la.ok === false ? "actions" : afterView);
+    showSaved = false;
+    if (la.ok !== false && run.conclusion === "success" && ["swap", "settings", "state", "check-sources"].includes(action))
+      flash(`${ACTION_TEXT[action]}: done ✓${action === "check-sources" ? " Report under <b>Last action</b> at the bottom of Roster." : ""}`);
+    show(la.ok === false ? "home" : afterView);
   } catch (e) {
     flash(esc(e.message) + (running && running.runUrl ? ` <a href="${esc(running.runUrl)}" target="_blank" rel="noopener">Open log</a>` : ""), "bad");
   } finally {
@@ -219,7 +216,10 @@ function busyText(t) { if (t) running && (running.note = t); if (!running) retur
 function flash(html, kind = "info") { $("#err").innerHTML = `<div class="msg ${kind}">${html} <button class="link" onclick="this.parentElement.remove()">✕</button></div>`; }
 
 /* --------------------------------------------------------------- views */
+const VIEWS = ["home", "swap", "settings"];
 function show(v) {
+  if (v === "setup") { show("settings"); setTimeout(() => $("#setupBox").scrollIntoView(), 0); return; }
+  if (!VIEWS.includes(v)) v = "home";                   // old saved names: plan, actions
   document.querySelectorAll("main > section").forEach(s => s.classList.toggle("hidden", s.id !== "v-" + v));
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   LS.set("view", v); window.scrollTo(0, 0);
@@ -230,7 +230,7 @@ function renderHeader() {
   const st = app && app.state;
   $("#net").textContent = navigator.onLine ? "online" : "offline";
   $("#net").className = "pill" + (navigator.onLine ? "" : " warn");
-  if (!st) { $("#sub").textContent = ready() ? "No data yet. Pull down or open Actions → Refresh." : "Start in Setup 🔑"; return; }
+  if (!st) { $("#sub").textContent = ready() ? "No data yet. Tap ↻ or Settings → Create / refresh data." : "Start in Settings ⚙ → Connect (bottom)"; return; }
   const sw = st.swaps_used == null ? "–" : `${st.swaps_used}/${st.swaps_total}`;
   $("#sub").textContent = `Period ${st.period ?? "–"} · swaps ${sw} · cash ${eur(st.leftover_cash)} · updated ${ago(app.updated_at)}`;
 }
@@ -242,22 +242,52 @@ function planPositions(res) {
   return pos;
 }
 
-function renderPlan() {
-  const el = $("#v-plan");
-  if (!app) { el.innerHTML = `<div class="card">No data yet.${ready() ? `<div style="margin-top:10px"><button class="btn" onclick="runAction('state')">Create / refresh data</button></div>` : ` Go to <b>Setup 🔑</b> first.`}</div>`; return; }
-  const hasPrev = !!app.preview, hasRes = !!app.result;
-  if (planMode === "preview" && !hasPrev) planMode = "result";
-  const res = planMode === "preview" ? app.preview : app.result;
-  let h = `<div class="seg-toggle">
-    <button class="${planMode === "result" ? "on" : ""}" onclick="planMode='result';renderPlan()">My plan</button>
-    <button class="${planMode === "preview" ? "on" : ""}" ${hasPrev ? "" : "disabled"} onclick="planMode='preview';renderPlan()">Period preview</button></div>`;
-  if (!res) { el.innerHTML = h + `<div class="card">No ${planMode === "preview" ? "preview" : "plan"} saved yet. Use <b>Actions</b>.</div>`; return; }
+function previewPending() {                            // an unsaved period preview newer than the saved plan?
+  const p = app && app.preview, r = app && app.result;
+  if (!p) return false;
+  if (!r) return true;
+  return String(p.computed_at || "") > String(r.computed_at || "");
+}
+
+function renderHome() {
+  const el = $("#v-home");
+  const la = app && app.last_action;
+  let h = "";
+  if (la && la.ok === false) {
+    h += `<div class="msg bad"><b>Last action failed:</b> ${esc(la.command)} ${esc((la.args || []).join(" "))} · ${esc(ago(la.finished_at))}
+      <details><summary class="small">Show log</summary><pre>${esc(la.output || "(no output)")}</pre></details></div>`;
+  }
+  h += `<button class="act primary" onclick="runAction('run')"><b>▶ Daily run</b><span>During the period, before the first game of the day: fresh data, new plan, today's swaps.</span></button>
+    <button class="act" onclick="runAction('preview-next')"><b>Period start</b><span>Best 6 for the next period. Changes nothing until you tap Save.</span></button>`;
+  if (!app) {
+    h += `<div class="card">No data yet. ${ready() ? `<div style="margin-top:10px"><button class="btn" onclick="runAction('state')">Create / refresh data</button></div>` : `Go to <b>Settings ⚙</b> → Connect (bottom) first.`}</div>`;
+    el.innerHTML = h; return;
+  }
+
+  // ---- current roster
+  const roster = (app.state && app.state.roster) || [];
+  h += `<div class="card"><h2>Current roster</h2>`;
+  h += roster.length ? `<table>` + roster.map(p => `<tr><td class="pos">${esc(p.position)}</td><td>${esc(p.name)}</td>
+      <td class="num dim small">${esc(p.team)}</td></tr>`).join("") + `</table>` : `<div class="dim small">No roster saved yet.</div>`;
+  h += `</div>`;
+
+  // ---- latest plan (or an unsaved preview)
+  const pending = previewPending() && !showSaved;
+  const res = pending ? app.preview : app.result;
+  if (!res) { h += `<div class="card"><h2>Latest plan</h2><div class="dim small">No plan yet. Tap <b>Daily run</b> or <b>Period start</b>.</div></div>`; el.innerHTML = h; return; }
   const today = todayIso();
-  h += `<div class="card"><div class="row"><div><div class="big">${Math.round(res.total_points)}</div>
-    <div class="dim small">points · ${res.mode === "free_start" ? "free start, whole period" : "rest of period"} · period ${res.period}</div></div>
+  h += `<div class="card"><h2>${pending ? "Period start preview" : "Latest plan"}</h2>`;
+  if (pending) {
+    h += `<div class="msg warn"><b>Not saved yet.</b> Buy exactly the 6 players of #1 on the site, then tap Save.
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn" onclick="savePeriod()">I bought these 6 → Save</button>
+      ${app.result ? `<button class="btn ghost" onclick="showSaved=true;renderHome()">Show saved plan</button>` : ""}</div></div>`;
+  } else if (previewPending()) {
+    h += `<div class="msg info">An unsaved period start preview exists. <button class="link" onclick="showSaved=false;renderHome()">Show it</button></div>`;
+  }
+  h += `<div class="row"><div><div class="big">${Math.round(res.total_points)}</div>
+    <div class="dim small">points · ${res.mode === "free_start" ? "free start, whole period" : "rest of period"} · period ${esc(res.period)}</div></div>
     <div class="num small dim" style="text-align:right">swaps planned<br><b style="color:var(--text);font-size:18px">${res.swaps_planned ?? 0}/${res.swaps_left ?? 0}</b></div></div>
     <div class="dim small" style="margin-top:6px">Calculated ${d(res.computed_at)} · budget ${eur(res.budget)} · cash ${eur(res.leftover_cash)}</div>`;
-  if (planMode === "preview") h += `<div class="msg info">Preview only. After you buy the 6 players of #1 on the site, go to <b>Actions → Save</b>.</div>`;
   if (res.gate) h += `<div class="msg info">${esc(render(res.gate))}</div>`;
   (res.events || []).forEach(e => h += `<div class="msg info">${esc(render(e))}</div>`);
   h += `</div>`;
@@ -275,47 +305,22 @@ function renderPlan() {
     }
     h += `<table>` + s.players.map(p => `<tr><td class="pos">${esc(p.position)}</td>
       <td>${s.in && s.in.includes(p.name) ? "<span class='buy'>●</span> " : ""}${esc(p.name)}<div class="dim small">${esc(p.team)} · ${p.games_in_window ?? "?"} game${p.games_in_window === 1 ? "" : "s"}</div></td>
-      <td class="num">${(+p.ppg).toFixed(1)}<div class="dim small">p/game</div></td></tr>`).join("") + `</table>`;
-    const caps = {};
-    (s.captain_by_day || []).forEach(c => (caps[c.name] = caps[c.name] || []).push(c));
-    const capToday = (s.captain_by_day || []).find(c => c.date === today);
-    if (Object.keys(caps).length) {
-      h += `<div class="small" style="margin-top:8px"><b>Captain:</b> ` + Object.entries(caps).map(([n, cs]) =>
-        `${esc(n.split(" ")[0])} ${cs.map(c => c.date === today ? `<b class="warn">${d(c.date)}</b>` : d(c.date)).join(" ")}`).join("; ") + `</div>`;
-      if (capToday) h += `<div class="msg info">Captain today: <b>${esc(capToday.name)}</b></div>`;
-    }
-    h += `</div>`;
+      <td class="num">${(+p.ppg).toFixed(1)}<div class="dim small">p/game</div></td></tr>`).join("") + `</table></div>`;
   });
   (res.warnings || []).forEach(w => h += `<div class="msg warn">${esc(render(w))}</div>`);
+
+  // ---- last successful action (small, collapsed)
+  if (la && la.ok !== false) {
+    h += `<details class="card small"><summary class="dim">Last action: ${esc(la.command)} · OK · ${esc(ago(la.finished_at))}</summary>
+      <pre>${esc(la.output || "(no output)")}</pre></details>`;
+  }
   el.innerHTML = h;
 }
-
-function renderActions() {
-  const la = app && app.last_action;
-  let h = `<button class="act primary" onclick="runAction('run')"><b>▶ Daily run</b><span>Before the first game of the day: fresh data, new plan, what to do today.</span></button>
-  <div class="card"><h2>Period start</h2>
-    <button class="act" onclick="runAction('preview-next')"><b>Preview next period</b><span>Best 6 for the next period. Changes nothing.</span></button>
-    <button class="act" onclick="savePeriod('save-next')"><b>Save next period</b><span>After you bought the 6 players of #1. Resets roster, swaps, plan.</span></button>
-    <details class="small"><summary class="dim">Current period instead</summary><div style="margin-top:8px">
-      <button class="act" onclick="runAction('preview-now')"><b>Preview this period</b><span>Changes nothing.</span></button>
-      <button class="act" onclick="savePeriod('save-now')"><b>Save this period</b><span>Resets roster, swaps, plan.</span></button></div></details>
-  </div>
-  <button class="act" onclick="runAction('check-sources',{},'actions')"><b>Check sources</b><span>Download all data sites and report OK / FAIL.</span></button>
-  <button class="act" onclick="refresh()"><b>↻ Reload</b><span>Just fetch the latest saved results (no calculation).</span></button>
-  <button class="act" onclick="runAction('state',{},'actions')"><b>Create / refresh data</b><span>Rebuilds the data file on GitHub from the saved state (no download, no calculation).</span></button>`;
-  if (la) {
-    h += `<div class="card"><div class="row"><h2>Last action: ${esc(la.command)} ${esc((la.args || []).join(" "))}</h2>
-      <b class="${la.ok ? "good" : "bad"}">${la.ok ? "OK" : "FAILED"}</b></div>
-      <div class="dim small">${esc(ago(la.finished_at))} · ${esc((la.finished_at || "").replace("T", " ").slice(0, 16))}</div>
-      <pre>${esc(la.output || "(no output)")}</pre></div>`;
-  }
-  $("#v-actions").innerHTML = h;
-}
-function savePeriod(action) {
+function savePeriod() {
   const p = app && app.preview;
   const names = p && p.segments && p.segments[0] ? p.segments[0].players.map(x => x.name).join(", ") : "(no preview yet)";
-  if (!confirm(`Save the period start?\n\nOnly do this AFTER you bought exactly the 6 players of #1 on the site.\n\nLast preview #1: ${names}\n\n(The save re-calculates with fresh data; if #1 changed, fix it afterwards with Swap.)`)) return;
-  runAction(action);
+  if (!confirm(`Save the period start?\n\nOnly do this AFTER you bought exactly the 6 players of #1 on the site.\n\nPreview #1: ${names}\n\n(The save re-calculates with fresh data; if #1 changed, fix it afterwards with Swap.)`)) return;
+  runAction("save-next");
 }
 
 /* ------------------------------------------------------------------ swap */
@@ -362,80 +367,69 @@ function sendSwaps() {
   }
   if (!pairs.length) return alert("Tick at least one sold player.");
   if (!confirm("Save these swaps?\n\n" + pairs.map(p => p.replace(">", "  →  ")).join("\n"))) return;
-  runAction("swap", { pairs: pairs.join("; ") }, "actions");
+  runAction("swap", { pairs: pairs.join("; ") }, "home");
 }
 
 /* -------------------------------------------------------------- settings */
-const SECTION_TITLES = { features: "Switches", swaps: "Swaps", lists: "Player lists", search: "Search",
-  season: "Season", roster_rules: "Roster rules", params: "Advanced numbers", ui: "Language" };
+// Only the player/team lists are shown. Every other setting is sent back unchanged.
+const LIST_ORDER = ["fix_players", "fix_game_days", "include_players", "exclude_players", "exclude_teams"];
+const LIST_TITLES = { fix_players: "Fix players", fix_game_days: "Fix game days", include_players: "Include players",
+  exclude_players: "Exclude players", exclude_teams: "Exclude teams" };
 function renderSettings() {
-  const el = $("#v-settings");
-  if (!app || !app.settings_schema) { el.innerHTML = `<div class="card">No data yet.</div>`; return; }
-  const S = app.settings, sch = app.settings_schema;
+  const el = $("#settingsLists");
+  if (!app || !app.settings_schema || !app.settings_schema.lists) { el.innerHTML = `<div class="card">No data yet. Connect first (below).</div>`; return; }
+  const S = app.settings.lists, sch = app.settings_schema.lists;
+  const keys = [...LIST_ORDER.filter(k => k in sch), ...Object.keys(sch).filter(k => !LIST_ORDER.includes(k))];
   let h = "";
   (app.settings_warnings || []).forEach(w => h += `<div class="msg warn">${esc(render(w))}</div>`);
-  for (const sec of ["features", "swaps", "lists", "search", "season", "roster_rules", "params", "ui"]) {
-    if (!sch[sec]) continue;
-    h += `<div class="card"><h2>${SECTION_TITLES[sec] || sec}</h2>`;
-    if (sec === "params") h += `<details><summary class="dim small">Show (change only if you know why)</summary>`;
-    for (const [k, f] of Object.entries(sch[sec])) {
-      const id = `set-${sec}-${k}`, v = S[sec][k];
-      const title = sec === "features" ? `${k} · ${esc(app.features[k] || "")}` : esc(k);
-      const help = sec === "features" ? "" : `<div class="help">${esc(f.description)}${f.min != null || f.max != null ? ` (${f.min ?? "…"}–${f.max ?? "…"})` : ""}${f.feature ? ` · used by ${f.feature}` : ""}</div>`;
-      if (f.type === "bool") {
-        h += `<div class="switch"><div>${title}</div><input type="checkbox" id="${id}" ${v ? "checked" : ""}></div>`;
-      } else if (f.choices) {
-        h += `<label for="${id}">${title}</label><select id="${id}">${f.choices.map(c => `<option ${c === v ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>${help}`;
-      } else if (f.type === "list") {
-        h += `<label for="${id}">${title}</label><textarea id="${id}" placeholder="one name per line">${esc(v.join("\n"))}</textarea>${help}`;
-      } else if (f.type === "dict") {
-        h += `<label for="${id}">${title}</label><input id="${id}" value='${esc(JSON.stringify(v))}'>${help}`;
-      } else {
-        h += `<label for="${id}">${title}</label><input id="${id}" inputmode="decimal" value="${esc(v)}">${help}`;
-      }
-    }
-    if (sec === "params") h += `</details>`;
-    h += `</div>`;
+  h += `<div class="card"><h2>Player and team lists</h2>`;
+  for (const k of keys) {
+    const f = sch[k], id = `set-lists-${k}`, v = S[k];
+    const title = LIST_TITLES[k] || esc(k);
+    const help = `<div class="help">${esc(f.description)}${f.min != null || f.max != null ? ` (${f.min ?? "…"}–${f.max ?? "…"})` : ""}</div>`;
+    if (f.type === "list") h += `<label for="${id}">${title}</label><textarea id="${id}" placeholder="one name per line">${esc((v || []).join("\n"))}</textarea>${help}`;
+    else h += `<label for="${id}">${title}</label><input id="${id}" inputmode="decimal" value="${esc(v)}">${help}`;
   }
-  h += `<button class="btn" style="width:100%" onclick="saveSettings()">Save settings</button>
-    <p class="help">Saving checks every value on GitHub. If one is wrong, nothing changes and the reason is shown under Actions.</p>`;
+  h += `<button class="btn" style="width:100%;margin-top:12px" onclick="saveSettings()">Save lists</button>
+    <p class="help">Saving checks every value on GitHub. If one is wrong, nothing changes and the reason is shown on Roster.</p></div>`;
   el.innerHTML = h;
 }
 function collectSettings() {
-  const S = JSON.parse(JSON.stringify(app.settings)), sch = app.settings_schema;
-  for (const [sec, fields] of Object.entries(sch)) for (const [k, f] of Object.entries(fields)) {
-    const el = document.getElementById(`set-${sec}-${k}`); if (!el) continue;
-    if (f.type === "bool") S[sec][k] = el.checked;
-    else if (f.type === "list") S[sec][k] = el.value.split("\n").map(s => s.trim()).filter(Boolean);
-    else if (f.type === "dict") { try { S[sec][k] = JSON.parse(el.value); } catch { throw new Error(`${sec}.${k} is not valid, e.g. {"MV":1,"PU":2,"HY":3}`); } }
+  const S = JSON.parse(JSON.stringify(app.settings)), sch = app.settings_schema.lists;
+  for (const [k, f] of Object.entries(sch)) {
+    const el = document.getElementById(`set-lists-${k}`); if (!el) continue;
+    if (f.type === "list") S.lists[k] = el.value.split("\n").map(s => s.trim()).filter(Boolean);
     else if (f.type === "int" || f.type === "float") {
       const n = Number(String(el.value).replace(",", ".").replace(/\s/g, ""));
-      if (!isFinite(n) || el.value.trim() === "") throw new Error(`${sec}.${k} must be a number`);
-      S[sec][k] = n;
-    } else S[sec][k] = el.value;
+      if (!isFinite(n) || el.value.trim() === "") throw new Error(`${LIST_TITLES[k] || k} must be a number`);
+      S.lists[k] = n;
+    } else S.lists[k] = el.value;
   }
   return S;
 }
 function saveSettings() {
   let S; try { S = collectSettings(); } catch (e) { return alert(e.message); }
   const changes = [];
-  for (const sec in S) for (const k in S[sec]) if (JSON.stringify(S[sec][k]) !== JSON.stringify(app.settings[sec][k]))
-    changes.push(`${sec}.${k}: ${JSON.stringify(app.settings[sec][k])} → ${JSON.stringify(S[sec][k])}`);
+  for (const k in S.lists) if (JSON.stringify(S.lists[k]) !== JSON.stringify(app.settings.lists[k]))
+    changes.push(`${LIST_TITLES[k] || k}: ${JSON.stringify(app.settings.lists[k])} → ${JSON.stringify(S.lists[k])}`);
   if (!changes.length) return alert("Nothing changed.");
   if (!confirm("Save these changes?\n\n" + changes.join("\n"))) return;
-  runAction("settings", { settings_json: JSON.stringify(S) }, "actions");
+  runAction("settings", { settings_json: JSON.stringify(S) }, "settings");
 }
 
-/* ----------------------------------------------------------------- setup */
+/* ----------------------------------------------------------------- setup (end of Settings) */
 function renderSetup() {
-  $("#v-setup").innerHTML = `<div class="card"><h2>Connect to your private repo</h2>
+  $("#setupBox").innerHTML = `<div class="card"><h2>Connect to your private repo</h2>
     <label for="c-owner">GitHub user name</label><input id="c-owner" value="${esc(cfg.owner)}" autocapitalize="off" autocomplete="off" placeholder="your GitHub user name">
     <label for="c-repo">Repo name</label><input id="c-repo" value="${esc(cfg.repo)}" autocapitalize="off" autocomplete="off" placeholder="the PRIVATE repo name">
     <label for="c-token">Token</label><input id="c-token" type="password" value="${esc(cfg.token)}" autocapitalize="off" autocomplete="off" placeholder="github_pat_…">
     <div class="help">Fine-grained token with access to ONLY this repo: Contents = Read, Actions = Read and write. Stored only on this phone.</div>
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="saveCfg()">Save & test</button>
     <button class="btn ghost" onclick="forget()">Forget token</button></div></div>
-    <div class="card small dim">Offline copy from ${esc(appFetchedAt ? appFetchedAt.replace("T", " ").slice(0, 16) : "–")}. App version 1.</div>`;
+    <div class="card"><h2>Maintenance</h2>
+    <button class="act" onclick="runAction('check-sources',{},'home')"><b>Check sources</b><span>Download all data sites and report OK / FAIL.</span></button>
+    <button class="act" onclick="runAction('state',{},'home')"><b>Create / refresh data</b><span>Rebuilds the data file on GitHub from the saved state (no download, no calculation).</span></button></div>
+    <div class="card small dim">Offline copy from ${esc(appFetchedAt ? appFetchedAt.replace("T", " ").slice(0, 16) : "–")}. App version 2.</div>`;
 }
 async function saveCfg() {
   cfg = { owner: $("#c-owner").value.trim(), repo: $("#c-repo").value.trim(), token: $("#c-token").value.trim() };
@@ -444,11 +438,11 @@ async function saveCfg() {
   catch (e) { return flash(e.message.startsWith("GitHub 404")
       ? "Repo not found. Check: user name and repo name spelled right, and the token was made with " +
         "<b>Only select repositories → your private repo</b>. " + esc(e.message) : esc(e.message), "bad"); }
-  try { await loadApp(); flash("Connected ✓ Data loaded.", "info"); renderAll(); show("plan"); }
+  try { await loadApp(); flash("Connected ✓ Data loaded.", "info"); renderAll(); show("home"); }
   catch (e) {                                          // 2) repo OK, data file missing?
     if (e.message.startsWith("GitHub 404")) {
       flash("Connected ✓ The repo is OK, but it has no data file yet. Creating it now (about 1 min)…", "info");
-      renderAll(); show("plan"); runAction("state");
+      renderAll(); show("home"); runAction("state");
     } else flash(esc(e.message), "bad");
   }
 }
@@ -457,9 +451,9 @@ function forget() { if (!confirm("Remove the token from this phone?")) return; c
 async function refresh() {
   if (!ready()) return show("setup");
   try { await loadApp(); $("#err").innerHTML = ""; renderAll(); }
-  catch (e) { flash(esc(e.message) + (e.message.startsWith("GitHub 404") ? " If Setup says the repo is OK, tap Actions → <b>Create / refresh data</b>." : "") + (app ? " Showing the saved copy." : ""), "bad"); }
+  catch (e) { flash(esc(e.message) + (e.message.startsWith("GitHub 404") ? " If Connect says the repo is OK, tap Settings → <b>Create / refresh data</b>." : "") + (app ? " Showing the saved copy." : ""), "bad"); }
 }
-function renderAll() { renderHeader(); renderPlan(); renderActions(); renderSwap(); renderSettings(); renderSetup(); }
+function renderAll() { renderHeader(); renderHome(); renderSwap(); renderSettings(); renderSetup(); }
 
 /* ------------------------------------------------------------------ start */
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
@@ -467,7 +461,7 @@ window.addEventListener("online", () => { renderHeader(); refresh(); });
 window.addEventListener("offline", renderHeader);
 document.addEventListener("visibilitychange", () => { if (!document.hidden && !running && ready() && navigator.onLine) refresh(); });
 renderAll();
-show(ready() ? LS.get("view", "plan") : "setup");
+show(ready() ? LS.get("view", "home") : "setup");
 if (ready() && navigator.onLine) refresh();
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "127.0.0.1")) navigator.serviceWorker.register("sw.js");
 </script>

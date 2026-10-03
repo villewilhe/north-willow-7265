@@ -1,6 +1,6 @@
 // Offline support (MOB4): keep the app screens on the phone. The data itself
 // (app.json) is kept by the page in localStorage; GitHub API calls are never cached here.
-const CACHE = "planner-v3";
+const CACHE = "planner-v4";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
