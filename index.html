@@ -168,7 +168,7 @@ async function findRun(requestId) {
 /* ------------------------------------------------------------ run an action */
 const ACTION_TEXT = {
   "run": "Daily run", "preview-next": "Preview next period", "save-next": "Save next period",
-  "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Log swaps",
+  "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Log swaps", "set-cash": "Set cash",
   "settings": "Save settings", "check-sources": "Check sources", "state": "Refresh",
 };
 async function runAction(action, extra = {}, afterView = "home") {
@@ -198,7 +198,7 @@ async function runAction(action, extra = {}, afterView = "home") {
       flash(`GitHub run ended: ${run.conclusion}. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Open log</a>`, "bad");
     }
     showSaved = false;
-    if (la.ok !== false && run.conclusion === "success" && ["swap", "settings", "state", "check-sources"].includes(action))
+    if (la.ok !== false && run.conclusion === "success" && ["swap", "set-cash", "settings", "state", "check-sources"].includes(action))
       flash(`${ACTION_TEXT[action]}: done ✓${action === "check-sources" ? " Report under <b>Last action</b> at the bottom of Roster." : ""}`);
     show(la.ok === false ? "home" : afterView);
   } catch (e) {
@@ -337,8 +337,15 @@ function renderSwap() {
       <span><b>${esc(p.name)}</b> <span class="dim small">${esc(p.position)} · ${esc(p.team)}</span></span></label>
       <input id="si${i}" class="hidden" placeholder="bought (${esc(p.position)})" autocomplete="off" autocapitalize="words"></div>`;
   });
-  h += `</div><button class="btn" style="width:100%;margin-top:10px" onclick="sendSwaps()">Save swaps</button></div>
-    <div class="card small dim">Swaps left in this period: <b style="color:var(--text)">${app.state.swaps_used == null ? "?" : app.state.swaps_total - app.state.swaps_used}</b> (reserve ${app.state.swaps_buffer}). The swap counter and cash update automatically.</div>`;
+  h += `</div><label for="swapcash" style="margin-top:12px">Cash on the site now (optional)</label>
+    <input id="swapcash" inputmode="numeric" placeholder="e.g. 12000 · empty = calculate" autocomplete="off">
+    <div class="help">Copy it from the site AFTER the swaps. Recommended when you log swaps late: prices change after every game day.</div>
+    <button class="btn" style="width:100%;margin-top:10px" onclick="sendSwaps()">Save swaps</button></div>
+    <div class="card"><h2>Correct cash</h2>
+    <div class="help">Cash here now: <b>${eur(app.state.leftover_cash)}</b>. If the site shows a different number, type it and tap Set cash.</div>
+    <input id="fixcash" inputmode="numeric" placeholder="cash on the site, e.g. 12000" autocomplete="off" style="margin-top:8px">
+    <button class="btn" style="width:100%;margin-top:10px" onclick="sendCash()">Set cash</button></div>
+    <div class="card small dim">Swaps left in this period: <b style="color:var(--text)">${app.state.swaps_used == null ? "?" : app.state.swaps_total - app.state.swaps_used}</b> (reserve ${app.state.swaps_buffer}). The swap counter updates automatically; cash too, unless you type the site's number.</div>`;
   el.innerHTML = h;
 }
 function fillFromPlan() {
@@ -366,8 +373,23 @@ function sendSwaps() {
     pairs.push(`${roster[i].name}>${inn}`);
   }
   if (!pairs.length) return alert("Tick at least one sold player.");
-  if (!confirm("Save these swaps?\n\n" + pairs.map(p => p.replace(">", "  →  ")).join("\n"))) return;
-  runAction("swap", { pairs: pairs.join("; ") }, "home");
+  const cash = cleanCash($("#swapcash").value);
+  if (cash === false) return alert("Cash must be a whole number of euros, e.g. 12000 (or leave it empty).");
+  if (!confirm("Save these swaps?\n\n" + pairs.map(p => p.replace(">", "  →  ")).join("\n")
+      + "\n\nCash: " + (cash === "" ? "calculate" : eur(+cash)))) return;
+  runAction("swap", { pairs: pairs.join("; "), cash }, "home");
+}
+// "12 000 €" -> "12000"; "" -> "" (not given); false = not a whole number >= 0
+function cleanCash(text) {
+  const t = String(text || "").replace(/[\s\u00a0€]|eur/gi, "");
+  if (!t) return "";
+  return /^\d+$/.test(t) ? String(+t) : false;
+}
+function sendCash() {
+  const cash = cleanCash($("#fixcash").value);
+  if (cash === "" || cash === false) return alert("Type the cash the site shows, whole euros, e.g. 12000.");
+  if (!confirm(`Set cash to ${eur(+cash)}?\n\nNow: ${eur(app.state.leftover_cash)}`)) return;
+  runAction("set-cash", { cash }, "swap");
 }
 
 /* -------------------------------------------------------------- settings */
