@@ -10,71 +10,75 @@
 <link rel="icon" href="icon-192.png">
 <style>
 :root {
-  --bg: #0f1720; --card: #17212c; --line: #263341; --text: #e6edf3; --dim: #8b9bab;
-  --accent: #3fa7ff; --good: #3fbf6f; --bad: #ff6b6b; --warn: #f2b84b; --buy: #3fbf6f; --sell: #ff8a65;
+  --bg: #0f1720; --card: #17212c; --line: #223040; --text: #e6edf3; --dim: #8b9bab;
+  --accent: #3fa7ff; --good: #3fbf6f; --bad: #ff6b6b; --warn: #f2b84b; --sell: #ff8a65;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text);
-  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
-header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
-  padding: 10px 16px 8px; }
-header h1 { font-size: 17px; margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-header .sub { color: var(--dim); font-size: 13px; margin-top: 2px; }
-main { padding: 12px 16px; max-width: 640px; margin: 0 auto; }
+header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 16px 10px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+header .sub { color: var(--dim); font-size: 14px; }
+header .sub b { color: var(--text); font-weight: 600; }
+main { padding: 4px 16px 12px; max-width: 640px; margin: 0 auto; }
 nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card);
   border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5; }
 nav button { flex: 1; background: none; border: 0; color: var(--dim); padding: 10px 0 12px; font-size: 13px; }
 nav button b { display: block; font-size: 20px; line-height: 1.2; }
 nav button.on { color: var(--accent); }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
-.card h2 { font-size: 15px; margin: 0 0 8px; }
-.big { font-size: 34px; font-weight: 700; line-height: 1.1; }
+.card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.card h2 { font-size: 15px; margin: 0 0 10px; }
+.big { font-size: 32px; font-weight: 700; line-height: 1.1; }
 .dim { color: var(--dim); } .small { font-size: 13px; }
-.good { color: var(--good); } .bad { color: var(--bad); } .warn { color: var(--warn); }
 .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; border: 1px solid var(--line); color: var(--dim); }
-.pill.now { border-color: var(--accent); color: var(--accent); }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-td { padding: 4px 2px; border-top: 1px solid var(--line); vertical-align: top; }
-td.pos { width: 34px; color: var(--dim); } td.num { text-align: right; white-space: nowrap; }
-.buy { color: var(--buy); } .sell { color: var(--sell); }
-.msg { font-size: 14px; margin: 6px 0; padding: 8px 10px; border-radius: 8px; background: #1d2a37; }
+.tag { font-size: 12px; font-weight: 600; color: var(--accent); margin-left: 6px; }
+.buy { color: var(--good); } .sell { color: var(--sell); }
+.pair { font-size: 15px; padding: 3px 0; }
+.list { margin: 0; padding: 0; list-style: none; font-size: 15px; }
+.list li { padding: 6px 0; border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; }
+.list li:first-child { border-top: 0; }
+.list .pos { width: 26px; color: var(--dim); font-size: 13px; flex: none; }
+.list .team { margin-left: auto; color: var(--dim); font-size: 13px; }
+.msg { font-size: 14px; margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: #1d2a37; }
 .msg.warn { border-left: 3px solid var(--warn); } .msg.info { border-left: 3px solid var(--accent); }
 .msg.bad { border-left: 3px solid var(--bad); }
-button.act { width: 100%; text-align: left; background: var(--card); color: var(--text); border: 1px solid var(--line);
-  border-radius: 12px; padding: 14px; margin-bottom: 10px; font-size: 16px; }
-button.act b { display: block; } button.act span { color: var(--dim); font-size: 13px; }
-button.act.primary { border-color: var(--accent); }
-button.act:disabled, button.btn:disabled { opacity: .45; }
-button.btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font-size: 16px; font-weight: 600; }
-button.btn.ghost { background: none; border: 1px solid var(--line); color: var(--text); }
+.msg .x { float: right; margin-left: 8px; }
+.actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.actions .btn { flex: 1; }
+button.btn { background: var(--accent); color: #fff; border: 0; border-radius: 12px; padding: 13px 16px; font-size: 16px; font-weight: 600; }
+button.btn.ghost { background: var(--card); color: var(--text); font-weight: 500; }
+button.btn.full { width: 100%; margin-top: 12px; }
+button.btn:disabled { opacity: .45; }
 button.link { background: none; border: 0; color: var(--accent); padding: 0; font-size: 14px; }
+details > summary { cursor: pointer; color: var(--dim); font-size: 14px; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸ "; } details[open] > summary::before { content: "▾ "; }
+details.card > summary { margin: 0; }
+details[open] > summary { margin-bottom: 10px; }
 pre { white-space: pre-wrap; word-break: break-word; font: 12.5px/1.35 ui-monospace, Consolas, monospace;
-  background: #0b1219; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0 0; max-height: 60vh; overflow: auto; }
-label { display: block; font-size: 14px; margin: 10px 0 4px; }
-input, select, textarea { width: 100%; background: #0b1219; color: var(--text); border: 1px solid var(--line);
-  border-radius: 8px; padding: 10px; font-size: 16px; font-family: inherit; }
-textarea { min-height: 70px; }
-.switch { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); gap: 12px; }
-.switch:first-of-type { border-top: 0; }
-.switch input { width: 24px; height: 24px; flex: none; }
-.help { color: var(--dim); font-size: 12.5px; }
-.seg-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
-.seg-toggle button { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--dim); font-size: 14px; }
-.seg-toggle button.on { border-color: var(--accent); color: var(--accent); }
+  background: #0b1219; border-radius: 8px; padding: 10px; margin: 8px 0 0; max-height: 60vh; overflow: auto; }
+label { display: block; font-size: 14px; margin: 12px 0 4px; }
+input, textarea { width: 100%; background: #0b1219; color: var(--text); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px; font-size: 16px; font-family: inherit; }
+textarea { min-height: 64px; }
+.help { color: var(--dim); font-size: 13px; margin-top: 4px; }
 #busy { display: none; } #busy.show { display: block; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--accent); border-right-color: transparent;
   border-radius: 50%; animation: s 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
 @keyframes s { to { transform: rotate(360deg); } }
-.swaprow { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line); }
+.swaprow { padding: 10px 0; border-top: 1px solid var(--line); }
+.swaprow:first-child { border-top: 0; }
+.swaprow label { margin: 0; display: flex; gap: 10px; align-items: center; font-size: 15px; }
+.swaprow input[type=checkbox] { width: 22px; height: 22px; flex: none; }
+.swaprow input[type=text], .swaprow input:not([type]) { margin-top: 8px; }
 .hidden { display: none !important; }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>Planner</span><span><button class="link" id="reload" style="font-size:20px;margin-right:6px" onclick="refresh()" title="Reload saved results">↻</button> <span id="net" class="pill"></span></span></h1>
   <div class="sub" id="sub">Loading…</div>
+  <button class="link" style="font-size:22px" onclick="refresh()" title="Reload">↻</button>
 </header>
 <main>
   <div id="busy" class="card"><span class="spin"></span><b id="busyTitle">Running…</b>
@@ -85,7 +89,7 @@ textarea { min-height: 70px; }
   <section id="v-settings" class="hidden"><div id="settingsLists"></div><div id="setupBox"></div></section>
 </main>
 <nav>
-  <button data-v="home" class="on"><b>▦</b>Roster</button>
+  <button data-v="home" class="on"><b>▦</b>Plan</button>
   <button data-v="swap"><b>⇄</b>Swap</button>
   <button data-v="settings"><b>⚙</b>Settings</button>
 </nav>
@@ -105,7 +109,7 @@ let running = null;                     // {action, requestId, startedAt, runUrl
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const d = iso => iso ? `${+iso.slice(8, 10)}.${+iso.slice(5, 7)}.` : "";
-const eur = n => n == null ? "–" : Math.round(n).toLocaleString("fi-FI").replace(/ /g, " ") + " €";
+const eur = n => n == null ? "–" : Math.round(n).toLocaleString("fi-FI").replace(/ /g, " ") + " €";
 const todayIso = () => { const t = new Date(); return new Date(t - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const ago = iso => { if (!iso) return "never"; const m = Math.round((Date.now() - new Date(iso)) / 6e4);
   return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
@@ -134,8 +138,8 @@ async function gh(path, opts = {}) {
   const r = await fetch(API + path, { cache: "no-store", ...opts, headers: headers(opts.headers || {}) });
   if (!r.ok) {
     let detail = ""; try { detail = (await r.json()).message || ""; } catch {}
-    const hint = r.status === 401 ? " (token wrong or expired → Settings ⚙ → Connect)" : r.status === 403 ? " (token lacks a permission → Settings ⚙ → Connect)"
-      : r.status === 404 ? " (owner/repo name wrong, or token has no access to this repo → Settings ⚙ → Connect)" : "";
+    const hint = r.status === 401 ? " (token wrong or expired → Settings → Connection)" : r.status === 403 ? " (token lacks a permission → Settings → Connection)"
+      : r.status === 404 ? " (owner/repo name wrong, or token has no access to this repo → Settings → Connection)" : "";
     throw new Error(`GitHub ${r.status}: ${detail}${hint}`);
   }
   return r;
@@ -167,9 +171,9 @@ async function findRun(requestId) {
 
 /* ------------------------------------------------------------ run an action */
 const ACTION_TEXT = {
-  "run": "Daily run", "preview-next": "Preview next period", "save-next": "Save next period",
-  "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Log swaps", "set-cash": "Set cash",
-  "settings": "Save settings", "check-sources": "Check sources", "state": "Refresh",
+  "run": "Daily run", "preview-next": "Period start", "save-next": "Save period start",
+  "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Save swaps", "set-cash": "Set cash",
+  "settings": "Save lists", "check-sources": "Check sources", "state": "Refresh data",
 };
 async function runAction(action, extra = {}, afterView = "home") {
   if (running) return alert("Wait: another action is still running.");
@@ -179,7 +183,7 @@ async function runAction(action, extra = {}, afterView = "home") {
   let t0 = Date.now(), tick = setInterval(() => busyText(), 1000);
   try {
     running.requestId = await dispatch(action, extra);
-    busyText("Started. Waiting for GitHub…");
+    busyText("Waiting for GitHub…");
     let run = null, n = 0;
     while (true) {
       await sleep(n < 3 ? 4000 : 6000); n++;
@@ -189,7 +193,7 @@ async function runAction(action, extra = {}, afterView = "home") {
       running.runUrl = run.html_url;
       if (run.status === "completed") break;
     }
-    busyText("Done. Loading results…");
+    busyText("Loading results…");
     $("#err").innerHTML = "";                       // old notes are no longer true
     await sleep(1500);
     await loadApp();
@@ -199,7 +203,7 @@ async function runAction(action, extra = {}, afterView = "home") {
     }
     showSaved = false;
     if (la.ok !== false && run.conclusion === "success" && ["swap", "set-cash", "settings", "state", "check-sources"].includes(action))
-      flash(`${ACTION_TEXT[action]}: done ✓${action === "check-sources" ? " Report under <b>Last action</b> at the bottom of Roster." : ""}`);
+      flash(`${ACTION_TEXT[action]} ✓${action === "check-sources" ? " Report: Settings → Last action." : ""}`);
     show(la.ok === false ? "home" : afterView);
   } catch (e) {
     flash(esc(e.message) + (running && running.runUrl ? ` <a href="${esc(running.runUrl)}" target="_blank" rel="noopener">Open log</a>` : ""), "bad");
@@ -209,37 +213,47 @@ async function runAction(action, extra = {}, afterView = "home") {
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function busy(on) { $("#busy").classList.toggle("show", on); if (on) { $("#busyTitle").textContent = ACTION_TEXT[running.action] + "…"; busyText("Sending…"); }
-  document.querySelectorAll("button.act, button.btn").forEach(b => b.disabled = on); }
+  document.querySelectorAll("button.btn").forEach(b => b.disabled = on); }
 function busyText(t) { if (t) running && (running.note = t); if (!running) return;
   const s = Math.round((Date.now() - running.startedAt) / 1000);
   $("#busyText").textContent = `${running.note || ""} ${s} s (usually 40–90 s)`; }
-function flash(html, kind = "info") { $("#err").innerHTML = `<div class="msg ${kind}">${html} <button class="link" onclick="this.parentElement.remove()">✕</button></div>`; }
+function flash(html, kind = "info") { $("#err").innerHTML = `<div class="msg ${kind}"><button class="link x" onclick="this.parentElement.remove()">✕</button>${html}</div>`; }
 
 /* --------------------------------------------------------------- views */
 const VIEWS = ["home", "swap", "settings"];
 function show(v) {
-  if (v === "setup") { show("settings"); setTimeout(() => $("#setupBox").scrollIntoView(), 0); return; }
+  if (v === "setup") { show("settings"); setTimeout(() => { const c = $("#conn"); if (c) { c.open = true; c.scrollIntoView(); } }, 0); return; }
   if (!VIEWS.includes(v)) v = "home";                   // old saved names: plan, actions
   document.querySelectorAll("main > section").forEach(s => s.classList.toggle("hidden", s.id !== "v-" + v));
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   LS.set("view", v); window.scrollTo(0, 0);
 }
 function ready() { return cfg.owner && cfg.repo && cfg.token; }
+const swapsLeft = st => st.swaps_used == null ? "–" : st.swaps_total - st.swaps_used;
 
 function renderHeader() {
   const st = app && app.state;
-  $("#net").textContent = navigator.onLine ? "online" : "offline";
-  $("#net").className = "pill" + (navigator.onLine ? "" : " warn");
-  if (!st) { $("#sub").textContent = ready() ? "No data yet. Tap ↻ or Settings → Create / refresh data." : "Start in Settings ⚙ → Connect (bottom)"; return; }
-  const sw = st.swaps_used == null ? "–" : `${st.swaps_used}/${st.swaps_total}`;
-  $("#sub").textContent = `Period ${st.period ?? "–"} · swaps ${sw} · cash ${eur(st.leftover_cash)} · updated ${ago(app.updated_at)}`;
+  const off = navigator.onLine ? "" : `<span style="color:var(--warn)">Offline · </span>`;
+  if (!st) { $("#sub").innerHTML = off + (ready() ? "No data yet. Tap ↻" : "Start: Settings → Connection"); return; }
+  $("#sub").innerHTML = `${off}Swaps left <b>${swapsLeft(st)}</b> · Cash <b>${eur(st.leftover_cash)}</b> · <span title="data updated">${ago(app.updated_at)}</span>`;
 }
 
 function planPositions(res) {
   const pos = {};
-  (app.state.roster || []).forEach(p => pos[p.name] = p.position);
+  ((app.state && app.state.roster) || []).forEach(p => pos[p.name] = p.position);
   (res.segments || []).forEach(s => s.players.forEach(p => pos[p.name] = p.position));
   return pos;
+}
+// pair each sold player with the bought player of the same position
+function pairs(seg, pos) {
+  const ins = [...(seg.in || [])];
+  const out = (seg.out || []).map(o => { const k = ins.findIndex(n => pos[n] === pos[o]); return [o, k >= 0 ? ins.splice(k, 1)[0] : null]; });
+  ins.forEach(n => out.push([null, n]));
+  return out.map(([o, i]) => `<div class="pair">${o ? `<span class="sell">${esc(o)}</span>` : ""}${o && i ? " → " : ""}${i ? `<span class="buy">${esc(i)}</span>` : ""}</div>`).join("");
+}
+function playerList(players, ins = []) {
+  return `<ul class="list">` + players.map(p => `<li><span class="pos">${esc(p.position)}</span>
+    <span>${ins.includes(p.name) ? "<span class='buy'>●</span> " : ""}${esc(p.name)}</span><span class="team">${esc(p.team)}</span></li>`).join("") + `</ul>`;
 }
 
 function previewPending() {                            // an unsaved period preview newer than the saved plan?
@@ -254,98 +268,98 @@ function renderHome() {
   const la = app && app.last_action;
   let h = "";
   if (la && la.ok === false) {
-    h += `<div class="msg bad"><b>Last action failed:</b> ${esc(la.command)} ${esc((la.args || []).join(" "))} · ${esc(ago(la.finished_at))}
-      <details><summary class="small">Show log</summary><pre>${esc(la.output || "(no output)")}</pre></details></div>`;
+    h += `<div class="msg bad"><b>Last action failed</b> · ${esc(ago(la.finished_at))}
+      <details style="margin-top:6px"><summary>Show log</summary><pre>${esc(la.output || "(no output)")}</pre></details></div>`;
   }
-  h += `<button class="act primary" onclick="runAction('run')"><b>▶ Daily run</b><span>During the period, before the first game of the day: fresh data, new plan, today's swaps.</span></button>
-    <button class="act" onclick="runAction('preview-next')"><b>Period start</b><span>Best 6 for the next period. Changes nothing until you tap Save.</span></button>`;
+  h += `<div class="actions"><button class="btn" onclick="runAction('run')">▶ Daily run</button>
+    <button class="btn ghost" onclick="runAction('preview-next')">Period start</button></div>`;
   if (!app) {
-    h += `<div class="card">No data yet. ${ready() ? `<div style="margin-top:10px"><button class="btn" onclick="runAction('state')">Create / refresh data</button></div>` : `Go to <b>Settings ⚙</b> → Connect (bottom) first.`}</div>`;
+    h += `<div class="card">${ready() ? `No data yet.<button class="btn full" onclick="runAction('state')">Create data</button>` : `Connect first: <b>Settings → Connection</b>.`}</div>`;
     el.innerHTML = h; return;
   }
 
-  // ---- current roster
-  const roster = (app.state && app.state.roster) || [];
-  h += `<div class="card"><h2>Current roster</h2>`;
-  h += roster.length ? `<table>` + roster.map(p => `<tr><td class="pos">${esc(p.position)}</td><td>${esc(p.name)}</td>
-      <td class="num dim small">${esc(p.team)}</td></tr>`).join("") + `</table>` : `<div class="dim small">No roster saved yet.</div>`;
-  h += `</div>`;
-
-  // ---- latest plan (or an unsaved preview)
   const pending = previewPending() && !showSaved;
   const res = pending ? app.preview : app.result;
-  if (!res) { h += `<div class="card"><h2>Latest plan</h2><div class="dim small">No plan yet. Tap <b>Daily run</b> or <b>Period start</b>.</div></div>`; el.innerHTML = h; return; }
-  const today = todayIso();
-  h += `<div class="card"><h2>${pending ? "Period start preview" : "Latest plan"}</h2>`;
-  if (pending) {
-    h += `<div class="msg warn"><b>Not saved yet.</b> Buy exactly the 6 players of #1 on the site, then tap Save.
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn" onclick="savePeriod()">I bought these 6 → Save</button>
-      ${app.result ? `<button class="btn ghost" onclick="showSaved=true;renderHome()">Show saved plan</button>` : ""}</div></div>`;
-  } else if (previewPending()) {
-    h += `<div class="msg info">An unsaved period start preview exists. <button class="link" onclick="showSaved=false;renderHome()">Show it</button></div>`;
+  const roster = (app.state && app.state.roster) || [];
+  if (!res) {
+    h += `<div class="card"><h2>My team</h2>${roster.length ? playerList(roster) : `<div class="dim small">No team saved yet.</div>`}</div>
+      <div class="card dim small">No plan yet. Tap <b>Daily run</b> (during a period) or <b>Period start</b>.</div>`;
+    el.innerHTML = h; return;
   }
-  h += `<div class="row"><div><div class="big">${Math.round(res.total_points)}</div>
-    <div class="dim small">points · ${res.mode === "free_start" ? "free start, whole period" : "rest of period"} · period ${esc(res.period)}</div></div>
-    <div class="num small dim" style="text-align:right">swaps planned<br><b style="color:var(--text);font-size:18px">${res.swaps_planned ?? 0}/${res.swaps_left ?? 0}</b></div></div>
-    <div class="dim small" style="margin-top:6px">Calculated ${d(res.computed_at)} · budget ${eur(res.budget)} · cash ${eur(res.leftover_cash)}</div>`;
-  if (res.gate) h += `<div class="msg info">${esc(render(res.gate))}</div>`;
-  (res.events || []).forEach(e => h += `<div class="msg info">${esc(render(e))}</div>`);
-  h += `</div>`;
-  (res.segments || []).forEach((s, i) => {
+  const today = todayIso(), segs = res.segments || [], pos = planPositions(res);
+
+  // ---- 1. what to do now
+  if (pending) {
+    const first = segs[0];
+    h += `<div class="card"><h2>Period start · not saved</h2>
+      <div class="small dim" style="margin-bottom:8px">Buy exactly these 6 on the site, then tap Save.</div>
+      ${first ? playerList(first.players) : ""}
+      <button class="btn full" onclick="savePeriod()">I bought these 6 → Save</button>
+      ${app.result ? `<div style="margin-top:10px;text-align:center"><button class="link" onclick="showSaved=true;renderHome()">Show saved plan instead</button></div>` : ""}</div>`;
+  } else {
+    if (previewPending()) h += `<div class="msg info">Unsaved period start exists. <button class="link" onclick="showSaved=false;renderHome()">Show it</button></div>`;
+    const swapSegs = segs.filter((s, i) => s.in && s.in.length && !(i === 0 && res.mode === "free_start"));
+    const next = swapSegs.find(s => s.dates[0] >= today);
+    h += `<div class="card">`;
+    if (next && next.dates[0] === today) h += `<h2>Swap today, before the first game</h2>${pairs(next, pos)}`;
+    else if (next) h += `<h2>No swaps today</h2><div class="dim small">Next swaps on ${d(next.dates[0])}</div>`;
+    else h += `<h2>No swaps today</h2><div class="dim small">No more swaps planned this period.</div>`;
+    h += `</div>`;
+    if (String(res.computed_at || "").slice(0, 10) < today)
+      h += `<div class="msg warn">Plan is from ${d(res.computed_at)}. Tap <b>Daily run</b> for a fresh one.</div>`;
+  }
+
+  // ---- 2. plan summary
+  h += `<div class="card"><div class="row"><div><div class="big">${Math.round(res.total_points)}</div>
+    <div class="dim small">points ${res.mode === "free_start" ? "for the whole period" : "for the rest of the period"}</div></div>
+    <div class="dim small" style="text-align:right">swaps<br><b style="color:var(--text);font-size:18px">${res.swaps_planned ?? 0} / ${res.swaps_left ?? 0}</b></div></div></div>`;
+
+  // ---- 3. timeline (current/next window open, others collapsed)
+  const openIdx = Math.max(0, segs.findIndex(s => s.dates[s.dates.length - 1] >= today));
+  segs.forEach((s, i) => {
+    if (pending && i === 0) return;                    // shown above
     const first = s.dates[0], last = s.dates[s.dates.length - 1];
     const now = first <= today && today <= last;
-    const head = (i === 0 && res.mode === "continuation") ? "NOW" : `#${i + 1}`;
-    h += `<div class="card"><div class="row"><h2>${head} · ${d(first)}–${d(last)} <span class="dim small">(${s.dates.length} game days)</span></h2>
-      <b>${Math.round(s.points)} p</b></div>`;
-    if (now) h += `<span class="pill now">today is in this window</span>`;
-    if (s.in && s.in.length) {
-      h += `<div class="small" style="margin:8px 0"><div class="buy">BUY: ${s.in.map(esc).join(", ")}</div>
-        <div class="sell">SELL: ${s.out.map(esc).join(", ")}</div>
-        <div class="dim">Do these swaps before the first game on ${d(first)}</div></div>`;
-    }
-    h += `<table>` + s.players.map(p => `<tr><td class="pos">${esc(p.position)}</td>
-      <td>${s.in && s.in.includes(p.name) ? "<span class='buy'>●</span> " : ""}${esc(p.name)}<div class="dim small">${esc(p.team)} · ${p.games_in_window ?? "?"} game${p.games_in_window === 1 ? "" : "s"}</div></td>
-      <td class="num">${(+p.ppg).toFixed(1)}<div class="dim small">p/game</div></td></tr>`).join("") + `</table></div>`;
+    const swaps = s.in && s.in.length && !(i === 0 && res.mode === "free_start");
+    const head = `${d(first)}–${d(last)}${now ? `<span class="tag">NOW</span>` : ""}`;
+    h += `<details class="card"${i === openIdx ? " open" : ""}><summary><span style="color:var(--text);font-weight:600">${head}</span>
+      <span style="float:right">${Math.round(s.points)} p</span></summary>
+      ${swaps ? `<div style="margin-bottom:8px">${pairs(s, pos)}</div>` : ""}
+      ${playerList(s.players, swaps ? s.in : [])}</details>`;
   });
-  (res.warnings || []).forEach(w => h += `<div class="msg warn">${esc(render(w))}</div>`);
 
-  // ---- last successful action (small, collapsed)
-  if (la && la.ok !== false) {
-    h += `<details class="card small"><summary class="dim">Last action: ${esc(la.command)} · OK · ${esc(ago(la.finished_at))}</summary>
-      <pre>${esc(la.output || "(no output)")}</pre></details>`;
-  }
+  // ---- 4. notes (warnings + info), collapsed
+  const notes = [...(res.gate ? [res.gate] : []), ...(res.events || []), ...(res.warnings || [])];
+  if (notes.length) h += `<details class="card"><summary>Notes (${notes.length})</summary>
+    ${notes.map(n => `<div class="small" style="padding:4px 0">${esc(render(n))}</div>`).join("")}</details>`;
   el.innerHTML = h;
 }
 function savePeriod() {
   const p = app && app.preview;
   const names = p && p.segments && p.segments[0] ? p.segments[0].players.map(x => x.name).join(", ") : "(no preview yet)";
-  if (!confirm(`Save the period start?\n\nOnly do this AFTER you bought exactly the 6 players of #1 on the site.\n\nPreview #1: ${names}\n\n(The save re-calculates with fresh data; if #1 changed, fix it afterwards with Swap.)`)) return;
+  if (!confirm(`Save the period start?\n\nOnly AFTER you bought exactly these 6 on the site:\n${names}\n\n(The save re-calculates with fresh data; if the 6 changed, fix it with Swap.)`)) return;
   runAction("save-next");
 }
 
 /* ------------------------------------------------------------------ swap */
 function renderSwap() {
   const el = $("#v-swap");
-  if (!app) { el.innerHTML = `<div class="card">No data yet.</div>`; return; }
+  if (!app) { el.innerHTML = `<div class="card dim">No data yet.</div>`; return; }
   const roster = app.state.roster || [];
-  let h = `<div class="card"><h2>I made swaps on the site</h2>
-    <div class="help">Tick each player you SOLD and type who you BOUGHT for him (part of the name is enough, e.g. "Palmu"). Same position only.</div>
-    <button class="link" style="margin-top:8px" onclick="fillFromPlan()">Fill from plan</button><div id="swaprows">`;
+  let h = `<div class="card"><div class="row"><h2>Log my swaps</h2><button class="link" onclick="fillFromPlan()">Fill from plan</button></div>
+    <div class="help" style="margin:-4px 0 6px">Tick who you sold, type who you bought (part of the name is enough).</div><div id="swaprows">`;
   roster.forEach((p, i) => {
-    h += `<div class="swaprow"><label style="margin:0;display:flex;gap:10px;align-items:center">
-      <input type="checkbox" id="so${i}" style="width:22px;height:22px" onchange="$('#si${i}').classList.toggle('hidden',!this.checked)">
-      <span><b>${esc(p.name)}</b> <span class="dim small">${esc(p.position)} · ${esc(p.team)}</span></span></label>
+    h += `<div class="swaprow"><label>
+      <input type="checkbox" id="so${i}" onchange="$('#si${i}').classList.toggle('hidden',!this.checked)">
+      <span>${esc(p.name)} <span class="dim small">${esc(p.position)}</span></span></label>
       <input id="si${i}" class="hidden" placeholder="bought (${esc(p.position)})" autocomplete="off" autocapitalize="words"></div>`;
   });
-  h += `</div><label for="swapcash" style="margin-top:12px">Cash on the site now (optional)</label>
-    <input id="swapcash" inputmode="numeric" placeholder="e.g. 12000 · empty = calculate" autocomplete="off">
-    <div class="help">Copy it from the site AFTER the swaps. Recommended when you log swaps late: prices change after every game day.</div>
-    <button class="btn" style="width:100%;margin-top:10px" onclick="sendSwaps()">Save swaps</button></div>
-    <div class="card"><h2>Correct cash</h2>
-    <div class="help">Cash here now: <b>${eur(app.state.leftover_cash)}</b>. If the site shows a different number, type it and tap Set cash.</div>
-    <input id="fixcash" inputmode="numeric" placeholder="cash on the site, e.g. 12000" autocomplete="off" style="margin-top:8px">
-    <button class="btn" style="width:100%;margin-top:10px" onclick="sendCash()">Set cash</button></div>
-    <div class="card small dim">Swaps left in this period: <b style="color:var(--text)">${app.state.swaps_used == null ? "?" : app.state.swaps_total - app.state.swaps_used}</b> (reserve ${app.state.swaps_buffer}). The swap counter updates automatically; cash too, unless you type the site's number.</div>`;
+  h += `</div><label for="swapcash">Cash on the site now <span class="dim">(optional)</span></label>
+    <input id="swapcash" inputmode="numeric" placeholder="empty = calculate" autocomplete="off">
+    <button class="btn full" onclick="sendSwaps()">Save swaps</button></div>
+    <details class="card"><summary>Cash wrong? (here ${eur(app.state.leftover_cash)})</summary>
+    <input id="fixcash" inputmode="numeric" placeholder="cash on the site, e.g. 12000" autocomplete="off">
+    <button class="btn full" onclick="sendCash()">Set cash</button></details>`;
   el.innerHTML = h;
 }
 function fillFromPlan() {
@@ -361,7 +375,7 @@ function fillFromPlan() {
     $("#so" + i).checked = on; $("#si" + i).classList.toggle("hidden", !on); $("#si" + i).value = "";
     if (on) { const k = ins.findIndex(n => pos[n] === p.position); if (k >= 0) { $("#si" + i).value = ins[k]; ins.splice(k, 1); } }
   });
-  flash(`Filled from the plan window starting ${d(seg.dates[0])}. Check it matches what you really did.`);
+  flash(`Filled from the plan for ${d(seg.dates[0])}. Check it matches what you did.`);
 }
 function sendSwaps() {
   const roster = app.state.roster || [], pairs = [];
@@ -381,7 +395,7 @@ function sendSwaps() {
 }
 // "12 000 €" -> "12000"; "" -> "" (not given); false = not a whole number >= 0
 function cleanCash(text) {
-  const t = String(text || "").replace(/[\s\u00a0€]|eur/gi, "");
+  const t = String(text || "").replace(/[\s €]|eur/gi, "");
   if (!t) return "";
   return /^\d+$/.test(t) ? String(+t) : false;
 }
@@ -399,7 +413,7 @@ const LIST_TITLES = { fix_players: "Fix players", fix_game_days: "Fix game days"
   exclude_players: "Exclude players", exclude_teams: "Exclude teams" };
 function renderSettings() {
   const el = $("#settingsLists");
-  if (!app || !app.settings_schema || !app.settings_schema.lists) { el.innerHTML = `<div class="card">No data yet. Connect first (below).</div>`; return; }
+  if (!app || !app.settings_schema || !app.settings_schema.lists) { el.innerHTML = ""; return; }
   const S = app.settings.lists, sch = app.settings_schema.lists;
   const keys = [...LIST_ORDER.filter(k => k in sch), ...Object.keys(sch).filter(k => !LIST_ORDER.includes(k))];
   let h = "";
@@ -408,12 +422,11 @@ function renderSettings() {
   for (const k of keys) {
     const f = sch[k], id = `set-lists-${k}`, v = S[k];
     const title = LIST_TITLES[k] || esc(k);
-    const help = `<div class="help">${esc(f.description)}${f.min != null || f.max != null ? ` (${f.min ?? "…"}–${f.max ?? "…"})` : ""}</div>`;
+    const help = f.description ? `<div class="help">${esc(f.description)}</div>` : "";
     if (f.type === "list") h += `<label for="${id}">${title}</label><textarea id="${id}" placeholder="one name per line">${esc((v || []).join("\n"))}</textarea>${help}`;
     else h += `<label for="${id}">${title}</label><input id="${id}" inputmode="decimal" value="${esc(v)}">${help}`;
   }
-  h += `<button class="btn" style="width:100%;margin-top:12px" onclick="saveSettings()">Save lists</button>
-    <p class="help">Saving checks every value on GitHub. If one is wrong, nothing changes and the reason is shown on Roster.</p></div>`;
+  h += `<button class="btn full" onclick="saveSettings()">Save lists</button></div>`;
   el.innerHTML = h;
 }
 function collectSettings() {
@@ -441,17 +454,20 @@ function saveSettings() {
 
 /* ----------------------------------------------------------------- setup (end of Settings) */
 function renderSetup() {
-  $("#setupBox").innerHTML = `<div class="card"><h2>Connect to your private repo</h2>
-    <label for="c-owner">GitHub user name</label><input id="c-owner" value="${esc(cfg.owner)}" autocapitalize="off" autocomplete="off" placeholder="your GitHub user name">
-    <label for="c-repo">Repo name</label><input id="c-repo" value="${esc(cfg.repo)}" autocapitalize="off" autocomplete="off" placeholder="the PRIVATE repo name">
+  const la = app && app.last_action;
+  $("#setupBox").innerHTML = `<details class="card" id="conn"${ready() ? "" : " open"}><summary>Connection${ready() ? " ✓" : ""}</summary>
+    <label for="c-owner" style="margin-top:0">GitHub user name</label><input id="c-owner" value="${esc(cfg.owner)}" autocapitalize="off" autocomplete="off">
+    <label for="c-repo">Private repo name</label><input id="c-repo" value="${esc(cfg.repo)}" autocapitalize="off" autocomplete="off">
     <label for="c-token">Token</label><input id="c-token" type="password" value="${esc(cfg.token)}" autocapitalize="off" autocomplete="off" placeholder="github_pat_…">
-    <div class="help">Fine-grained token with access to ONLY this repo: Contents = Read, Actions = Read and write. Stored only on this phone.</div>
-    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="saveCfg()">Save & test</button>
-    <button class="btn ghost" onclick="forget()">Forget token</button></div></div>
-    <div class="card"><h2>Maintenance</h2>
-    <button class="act" onclick="runAction('check-sources',{},'home')"><b>Check sources</b><span>Download all data sites and report OK / FAIL.</span></button>
-    <button class="act" onclick="runAction('state',{},'home')"><b>Create / refresh data</b><span>Rebuilds the data file on GitHub from the saved state (no download, no calculation).</span></button></div>
-    <div class="card small dim">Offline copy from ${esc(appFetchedAt ? appFetchedAt.replace("T", " ").slice(0, 16) : "–")}. App version 2.</div>`;
+    <div class="help">Fine-grained token, only this repo: Contents = Read, Actions = Read and write. Stored only on this phone.</div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" style="flex:1" onclick="saveCfg()">Save & test</button>
+    <button class="btn ghost" onclick="forget()">Forget token</button></div></details>
+    <details class="card"><summary>Maintenance</summary>
+    <div style="display:flex;gap:8px"><button class="btn ghost" style="flex:1" onclick="runAction('check-sources',{},'settings')">Check sources</button>
+    <button class="btn ghost" style="flex:1" onclick="runAction('state',{},'home')">Refresh data</button></div>
+    <div class="help">Check sources: tests every data download. Refresh data: rebuilds the data file, no calculation.</div>
+    ${la ? `<details style="margin-top:12px"><summary>Last action: ${esc(la.command)} · ${la.ok === false ? "failed" : "OK"} · ${esc(ago(la.finished_at))}</summary><pre>${esc(la.output || "(no output)")}</pre></details>` : ""}
+    <div class="help" style="margin-top:12px">Offline copy from ${esc(appFetchedAt ? appFetchedAt.replace("T", " ").slice(0, 16) : "–")} · app v3</div></details>`;
 }
 async function saveCfg() {
   cfg = { owner: $("#c-owner").value.trim(), repo: $("#c-repo").value.trim(), token: $("#c-token").value.trim() };
@@ -460,10 +476,10 @@ async function saveCfg() {
   catch (e) { return flash(e.message.startsWith("GitHub 404")
       ? "Repo not found. Check: user name and repo name spelled right, and the token was made with " +
         "<b>Only select repositories → your private repo</b>. " + esc(e.message) : esc(e.message), "bad"); }
-  try { await loadApp(); flash("Connected ✓ Data loaded.", "info"); renderAll(); show("home"); }
+  try { await loadApp(); flash("Connected ✓", "info"); renderAll(); show("home"); }
   catch (e) {                                          // 2) repo OK, data file missing?
     if (e.message.startsWith("GitHub 404")) {
-      flash("Connected ✓ The repo is OK, but it has no data file yet. Creating it now (about 1 min)…", "info");
+      flash("Connected ✓ No data file yet. Creating it now (about 1 min)…", "info");
       renderAll(); show("home"); runAction("state");
     } else flash(esc(e.message), "bad");
   }
@@ -473,7 +489,7 @@ function forget() { if (!confirm("Remove the token from this phone?")) return; c
 async function refresh() {
   if (!ready()) return show("setup");
   try { await loadApp(); $("#err").innerHTML = ""; renderAll(); }
-  catch (e) { flash(esc(e.message) + (e.message.startsWith("GitHub 404") ? " If Connect says the repo is OK, tap Settings → <b>Create / refresh data</b>." : "") + (app ? " Showing the saved copy." : ""), "bad"); }
+  catch (e) { flash(esc(e.message) + (e.message.startsWith("GitHub 404") ? " If the connection is OK, tap Settings → Maintenance → <b>Refresh data</b>." : "") + (app ? " Showing the saved copy." : ""), "bad"); }
 }
 function renderAll() { renderHeader(); renderHome(); renderSwap(); renderSettings(); renderSetup(); }
 
