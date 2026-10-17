@@ -407,26 +407,26 @@ function sendCash() {
 }
 
 /* -------------------------------------------------------------- settings */
-// Only the player/team lists are shown. Every other setting is sent back unchanged.
-const LIST_ORDER = ["fix_players", "fix_game_days", "include_players", "exclude_players", "exclude_teams"];
-const LIST_TITLES = { fix_players: "Fix players", fix_game_days: "Fix game days", include_players: "Include players",
-  exclude_players: "Exclude players", exclude_teams: "Exclude teams" };
+// Only the "Exclude players" list is shown (for players out of the lineup, e.g. injured).
+// Every other setting, including the hidden lists, is sent back unchanged.
+const LIST_ORDER = ["exclude_players"];
+const LIST_TITLES = { exclude_players: "Exclude players" };
 function renderSettings() {
   const el = $("#settingsLists");
   if (!app || !app.settings_schema || !app.settings_schema.lists) { el.innerHTML = ""; return; }
   const S = app.settings.lists, sch = app.settings_schema.lists;
-  const keys = [...LIST_ORDER.filter(k => k in sch), ...Object.keys(sch).filter(k => !LIST_ORDER.includes(k))];
+  const keys = LIST_ORDER.filter(k => k in sch);
   let h = "";
   (app.settings_warnings || []).forEach(w => h += `<div class="msg warn">${esc(render(w))}</div>`);
-  h += `<div class="card"><h2>Player and team lists</h2>`;
+  h += `<div class="card"><h2>Exclude players</h2><div class="help" style="margin-top:0">Players out of the lineup (injured etc.). One name per line.</div>`;
   for (const k of keys) {
     const f = sch[k], id = `set-lists-${k}`, v = S[k];
     const title = LIST_TITLES[k] || esc(k);
     const help = f.description ? `<div class="help">${esc(f.description)}</div>` : "";
-    if (f.type === "list") h += `<label for="${id}">${title}</label><textarea id="${id}" placeholder="one name per line">${esc((v || []).join("\n"))}</textarea>${help}`;
+    if (f.type === "list") h += `<label for="${id}">${keys.length > 1 ? title : ""}</label><textarea id="${id}" placeholder="one name per line">${esc((v || []).join("\n"))}</textarea>${help}`;
     else h += `<label for="${id}">${title}</label><input id="${id}" inputmode="decimal" value="${esc(v)}">${help}`;
   }
-  h += `<button class="btn full" onclick="saveSettings()">Save lists</button></div>`;
+  h += `<button class="btn full" onclick="saveSettings()">Save</button></div>`;
   el.innerHTML = h;
 }
 function collectSettings() {
