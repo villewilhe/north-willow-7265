@@ -260,6 +260,8 @@ function previewPending() {                            // an unsaved period prev
   const p = app && app.preview, r = app && app.result;
   if (!p) return false;
   if (!r) return true;
+  if (p.saved_at || r.saved_at)                        // exact save time (computed_at is only the date)
+    return String(p.saved_at || "") > String(r.saved_at || "");
   return String(p.computed_at || "") > String(r.computed_at || "");
 }
 
