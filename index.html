@@ -173,7 +173,7 @@ async function findRun(requestId) {
 const ACTION_TEXT = {
   "run": "Daily run", "preview-next": "Period start", "save-next": "Save period start",
   "preview-now": "Preview this period", "save-now": "Save this period", "swap": "Save swaps", "set-cash": "Set cash",
-  "settings": "Save lists", "check-sources": "Check sources", "state": "Refresh data",
+  "set-swaps": "Set swaps left", "settings": "Save settings", "check-sources": "Check sources", "state": "Refresh data",
 };
 async function runAction(action, extra = {}, afterView = "home") {
   if (running) return alert("Wait: another action is still running.");
@@ -202,7 +202,7 @@ async function runAction(action, extra = {}, afterView = "home") {
       flash(`GitHub run ended: ${run.conclusion}. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Open log</a>`, "bad");
     }
     showSaved = false;
-    if (la.ok !== false && run.conclusion === "success" && ["swap", "set-cash", "settings", "state", "check-sources"].includes(action))
+    if (la.ok !== false && run.conclusion === "success" && ["swap", "set-cash", "set-swaps", "settings", "state", "check-sources"].includes(action))
       flash(`${ACTION_TEXT[action]} ✓${action === "check-sources" ? " Report: Settings → Last action." : ""}`);
     show(la.ok === false ? "home" : afterView);
   } catch (e) {
@@ -361,7 +361,10 @@ function renderSwap() {
     <button class="btn full" onclick="sendSwaps()">Save swaps</button></div>
     <details class="card"><summary>Cash wrong? (here ${eur(app.state.leftover_cash)})</summary>
     <input id="fixcash" inputmode="numeric" placeholder="cash on the site, e.g. 12000" autocomplete="off">
-    <button class="btn full" onclick="sendCash()">Set cash</button></details>`;
+    <button class="btn full" onclick="sendCash()">Set cash</button></details>
+    <details class="card"><summary>Swaps left wrong? (here ${swapsLeft(app.state)})</summary>
+    <input id="fixswaps" inputmode="numeric" placeholder="swaps left on the site, e.g. 18" autocomplete="off">
+    <button class="btn full" onclick="sendSwapsLeft()">Set swaps left</button></details>`;
   el.innerHTML = h;
 }
 function fillFromPlan() {
@@ -408,6 +411,13 @@ function sendCash() {
   runAction("set-cash", { cash }, "swap");
 }
 
+function sendSwapsLeft() {
+  const total = app.state.swaps_total ?? 20, n = cleanCash($("#fixswaps").value);
+  if (n === "" || n === false || +n > total) return alert(`Type the swaps left the site shows, a whole number 0–${total}.`);
+  if (!confirm(`Set swaps left to ${n}/${total}?\n\nNow: ${swapsLeft(app.state)}`)) return;
+  runAction("set-swaps", { swaps_left: n }, "swap");
+}
+
 /* -------------------------------------------------------------- settings */
 // Only the "Exclude players" list is shown (for players out of the lineup, e.g. injured).
 // Every other setting, including the hidden lists, is sent back unchanged.
@@ -429,6 +439,11 @@ function renderSettings() {
     else h += `<label for="${id}">${title}</label><input id="${id}" inputmode="decimal" value="${esc(v)}">${help}`;
   }
   h += `<button class="btn full" onclick="saveSettings()">Save</button></div>`;
+  const sw = app.settings.swaps || {}, bsch = (app.settings_schema.swaps || {}).buffer;
+  if (bsch) h += `<div class="card"><h2>Swap buffer</h2>
+    <div class="help" style="margin-top:0">Swaps kept in reserve, never planned. The plan may use ${esc(sw.total)} − used − buffer.</div>
+    <input id="set-buffer" inputmode="numeric" value="${esc(sw.buffer)}" autocomplete="off">
+    <button class="btn full" onclick="saveBuffer()">Save buffer</button></div>`;
   el.innerHTML = h;
 }
 function collectSettings() {
@@ -451,6 +466,17 @@ function saveSettings() {
     changes.push(`${LIST_TITLES[k] || k}: ${JSON.stringify(app.settings.lists[k])} → ${JSON.stringify(S.lists[k])}`);
   if (!changes.length) return alert("Nothing changed.");
   if (!confirm("Save these changes?\n\n" + changes.join("\n"))) return;
+  runAction("settings", { settings_json: JSON.stringify(S) }, "settings");
+}
+
+function saveBuffer() {
+  const total = app.settings.swaps.total, old = app.settings.swaps.buffer;
+  const v = $("#set-buffer").value.trim();
+  if (!/^\d+$/.test(v) || +v > total) return alert(`Buffer must be a whole number 0–${total}.`);
+  if (+v === old) return alert("Nothing changed.");
+  if (!confirm(`Set swap buffer ${old} → ${+v}?\n\nThen press Daily run for a new plan.`)) return;
+  const S = JSON.parse(JSON.stringify(app.settings));
+  S.swaps.buffer = +v;
   runAction("settings", { settings_json: JSON.stringify(S) }, "settings");
 }
 
